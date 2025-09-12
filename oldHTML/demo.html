@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supabase Multi-Axis Chart</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1"></script>
+
+
+  <style>
+    .chart-container {
+      position: relative;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col items-center justify-center min-h-screen p-4">
+  <div class="w-full max-w-4xl h-[90vh] bg-white shadow-xl rounded-3xl p-6 flex flex-col items-center">
+    <h1 class="text-3xl font-bold text-gray-800 mb-4">Care Gap Closure Data</h1>
+    <div class="chart-container flex-grow w-full h-full relative">
+      <canvas id="myChart"></canvas>
+      <div id="no-data-message" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-500 text-xl font-semibold">
+        No data available to display.
+      </div>
+    </div>
+
+    <!-- Input Container for Adding Data -->
+    <div class="mt-6 w-full max-w-sm bg-gray-50 p-4 rounded-xl shadow-inner flex flex-col gap-3">
+        <h2 class="text-xl font-bold text-gray-700">Add New Data Point</h2>
+        <div class="flex flex-col gap-3">
+            <input
+                type="number"
+                id="percentageInput"
+                placeholder="Enter number for 'nums'"
+                class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            />
+            <input
+                type="date"
+                id="date"
+                placeholder="Enter Date"
+                class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            />
+            <input
+                type="string"
+                id="insurance"
+                placeholder="Enter insurance name"
+                class="w-full p-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+            />
+            <button
+                id="addDataButton"
+                class="bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition shadow-md"
+            >
+                Add Data
+            </button>
+        </div>
+        <p id="statusMessage" class="text-sm text-center text-gray-500 mt-2"></p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const supabaseUrl = 'https://mzbnudzzilqcvwwwfrsw.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16Ym51ZHp6aWxxY3Z3d3dmcnN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMzQzNTUsImV4cCI6MjA3MTgxMDM1NX0.FmEhkmCkiOI3C5sG0_N2eLpdA-YhUdjF6edtto-Tu_I';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    let chartInstance = null;
+
+    /**
+     * Renders a chart with multiple Y-axes from a Supabase table.
+     * @param {string} canvasId The ID of the canvas element.
+     * @param {string} tableName The name of the Supabase table.
+     * @param {string} chartType The type of chart (e.g., 'line', 'bar').
+     * @param {string} xColumn The name of the column for the x-axis.
+     * @param {string[]} yColumns An array of column names for the y-axes.
+     */
+    
+
+  async function renderSupabaseChart(canvasId, tableName, chartType, xColumn, yColumn, groupColumn = null) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) {
+      console.error(`Canvas element with ID "${canvasId}" not found.`);
+      return;
+    }
+
+    const noDataMessage = document.getElementById('no-data-message');
+    const ctx = canvas.getContext('2d');
+
+    // Dynamically set the columns to fetch based on whether a groupColumn is provided
+    const selectQuery = groupColumn ? `${xColumn}, ${yColumn}, ${groupColumn}` : `${xColumn}, ${yColumn}`;
+
+    // Fetch data from the specified Supabase table
+    const { data: records, error } = await supabase
+      .from(tableName)
+      .select(selectQuery)
+      .order(xColumn, { ascending: true });
+
+
+    //Error handling and no data case
+    if (error) {
+      console.error('Error fetching data:', error.message);
+      noDataMessage.classList.remove('hidden');
+      return;
+    }
+    if (!records || records.length === 0) {
+      console.warn('No data found for the specified table.');
+      noDataMessage.classList.remove('hidden');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+      return;
+    }
+    noDataMessage.classList.add('hidden');
+
+    let labels;
+    let datasets;
+
+    // Logic for a multi-line chart (if a groupColumn is provided)
+    if (groupColumn) {
+      // Group data by the specified column (e.g., 'insurance')
+      const groupedData = records.reduce((acc, record) => {
+        const groupKey = record[groupColumn];
+        if (!acc[groupKey]) {
+          acc[groupKey] = [];
+        }
+        acc[groupKey].push(record);
+        return acc;
+      }, {});
+
+      // Get a unique, sorted list of dates for the x-axis labels
+      labels = [...new Set(records.map(record => record[xColumn]))].sort();
+
+      // Create a dataset for each group (e.g., each insurance company)
+      datasets = Object.keys(groupedData).map(groupKey => {
+        const groupRecords = groupedData[groupKey];
+        const randomColor = `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 1)`;
+
+        // Create a data array with nulls for missing dates to ensure lines align
+        const data = labels.map(date => {
+          const record = groupRecords.find(r => r[xColumn] === date);
+          return record ? record[yColumn] : null;
+        });
+
+        return {
+          label: groupKey,
+          data: data,
+          backgroundColor: randomColor.replace('1)', '0.5)'),
+          borderColor: randomColor,
+          borderWidth: 2,
+          tension: 0.4,
+          fill: false,
+        };
+      });
+
+    } else { // Logic for a single-line chart (if no groupColumn is provided)
+      labels = records.map(record => record[xColumn]);
+      const randomColor = `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 1)`;
+
+      datasets = [{
+        label: yColumn,
+        data: records.map(record => record[yColumn]),
+        backgroundColor: randomColor.replace('1)', '0.5)'),
+        borderColor: randomColor,
+        borderWidth: 2,
+        tension: 0.1,
+        fill: false,
+      }];
+    }
+
+    //Make the chart finally
+    const chartData = {
+      labels,
+      datasets,
+    };
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: groupColumn ? 'Percentage' : 'Values' },
+          min:0,
+          max: 1
+  
+        },
+        x: {
+          title: { display: true, text: xColumn }
+        }
+      },
+      plugins: {
+        legend: { display: true },
+        tooltip: { mode: 'index', intersect: false }
+      }
+    };
+
+    // Add specific time scale options for date data
+    if (groupColumn) {
+      chartOptions.scales.x = {
+        type: 'time',
+        time: {
+            unit: 'month',
+            tooltipFormat: 'MMM yyyy',
+            displayFormats: {
+                month: 'MMM yyyy'
+            }
+        },
+        title: { display: true, text: 'Date' }
+      };
+    }
+
+    if (chartInstance) {
+      chartInstance.destroy();
+    }
+
+    chartInstance = new Chart(ctx, {
+      type: chartType,
+      data: chartData,
+      options: chartOptions,
+    });
+    }
+
+    /**
+     * Adds data to the specified Supabase table and refreshes the chart.
+     */
+    async function addDataToSupabase() {
+      // 1. Correctly get the input elements and their values
+      const percentageInput = document.getElementById('percentageInput');
+      const dateInput = document.getElementById('date');
+      const insuranceInput = document.getElementById('insurance');
+      const statusMessage = document.getElementById('statusMessage');
+
+      const percentageValue = parseFloat(percentageInput.value);
+      const dateValue = dateInput.value;
+      const insuranceValue = insuranceInput.value;
+
+      statusMessage.textContent = ''; 
+
+
+      if (isNaN(percentageValue) || !insuranceValue || !dateValue) {
+          statusMessage.textContent = 'Please fill out all fields with valid data.';
+          statusMessage.className = 'text-sm text-center text-red-500';
+          return;
+      }
+
+      const { data, error } = await supabase
+        .from('closure_percentage')
+        .insert([
+          {date: dateValue, insurance: insuranceValue, percentage: percentageValue }
+        ]);
+      
+        if (error) {
+          console.error('Error inserting data:', error.message);
+          statusMessage.textContent = `Error adding data: ${error.message}`;
+          statusMessage.className = 'text-sm text-center text-red-500';
+        } else {
+          statusMessage.textContent = 'Data added successfully!';
+          statusMessage.className = 'text-sm text-center text-green-500';
+          percentageInput.value = ''; // Clear the input fields
+          insuranceInput.value = '';
+          dateInput.value = '';
+          renderSupabaseChart( // Re-render the chart to show the new data
+            'myChart',
+            'closure_percentage',
+            'line',
+            'date',
+            'percentage',
+            'insurance'
+          );
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      //Percent X Date per insurance
+      renderSupabaseChart(
+      'myChart',
+       'closure_percentage', 
+       'line', 
+       'date', 
+       'percentage', 
+       'insurance'
+      );
+      // await renderSupabaseChart(
+      //   'myChart',
+      //   'test_add',
+      //   'line',
+      //   'id',
+      //   'nums'
+      //   );
+
+      // Attach event listener to the "Add Data" button
+      const addDataButton = document.getElementById('addDataButton');
+      if (addDataButton) {
+        addDataButton.addEventListener('click', addDataToSupabase);
+      }
+    });
+  </script>
+</body>
+</html>
