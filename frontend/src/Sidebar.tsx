@@ -8,7 +8,7 @@ const Sidebar: React.FC = () => {
         <li><a href="/">Dashboard</a></li>
         <li><a href="/gaps">Care Gap Closure</a></li>
         <li><a href="/entry">Patient Access Goals</a></li>
-        <li><a href="/demo">Risk Score</a></li>
+        <li><a href="/risk">Risk Score</a></li>
         <li><a href="/other">Other</a></li>
       </ul>
     </div>

@@ -11,12 +11,12 @@ interface ChartDataRecord {
 }
 
 const gapsFormFields: FormField[] = [
-  { label: 'Percent Closure Amount', name: 'percentage', type: 'text', placeholder: 'Enter the percentage' },
+  { label: 'Risk Closure Rate', name: 'percentage', type: 'text', placeholder: 'Enter the percentage' },
   { label: 'Date', name: 'date', type: 'date' },
   { label: 'Insurance', name: 'insurance', type: 'select', options: ['MyBlue', 'BCBS APO', 'Optum', 'WellMed'] },
 ];
 
-const Gaps: React.FC = () => {
+const RiskScore: React.FC = () => {
   const [chartData, setChartData] = useState<ChartDataRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ const Gaps: React.FC = () => {
 
   const fetchChartData = async () => {
     try {
-      const response = await fetch('/api/chart-data');
+      const response = await fetch('/api/chart-data/risk-score');
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
@@ -42,8 +42,8 @@ const Gaps: React.FC = () => {
     const percentage = Number.parseFloat(formData.percentage);
     const { date, insurance } = formData;
 
-    if (!percentage || isNaN(percentage) || percentage < 0 || percentage > 1) {
-      alert('Please enter a valid percentage between 0 and 1.');
+    if (!percentage || isNaN(percentage) || percentage < 0 || percentage > 100) {
+      alert('Please enter a valid percentage between 0 and 100.');
       return;
     }
     if (!date) {
@@ -56,7 +56,7 @@ const Gaps: React.FC = () => {
     }
 
     try {
-      const response = await fetch('/api/gaps', {
+      const response = await fetch('/api/risk', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ const Gaps: React.FC = () => {
         <div className="gaps-top-row">
           <div className="gaps-top-row-item">
             <DataEntryForm
-              title="Add New Care Gap Data Point"
+              title="Add New Risk Closure Data Point"
               fields={gapsFormFields}
               onSubmit={handleFormSubmit}
               resetKey={resetKey} // Pass the reset key to the child component
@@ -112,11 +112,11 @@ const Gaps: React.FC = () => {
           </div>
         </div>
         <div className="gaps-chart-full-width-container">
-          <Chart data={chartData} maxY={100}/>
+          <Chart data={chartData} maxY={70}/>
         </div>
       </div>
     </Layout>
   );
 };
 
-export default Gaps;
+export default RiskScore;

@@ -16,6 +16,8 @@ app.get('/', (req, res) => {
     res.send('Hello from the Express server!');
 });
 
+
+// Endpoint to fetch chart data for gaps
 app.get('/api/chart-data', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -35,6 +37,7 @@ app.get('/api/chart-data', async (req, res) => {
   }
 });
 
+
 app.post('/api/gaps', async (req, res) => {
     const { percentage, date, insurance } = req.body;
     try {
@@ -53,6 +56,47 @@ app.post('/api/gaps', async (req, res) => {
         res.status(500).json({ error: 'An unexpected error occurred' });
     }
 });
+
+
+// New endpoint for risk score data
+app.get('/api/chart-data/risk-score', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('risk_closure')
+      .select('date, percentage, insurance')
+      .order('date', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching data from Supabase:', error.message);
+      return res.status(500).json({ error: 'Failed to fetch data' });
+    }
+
+    res.json(data);
+  } catch (e) {
+    console.error('Server error:', e);
+    res.status(500).json({ error: 'An unexpected error occurred' });
+  }
+});
+
+app.post('/api/risk', async (req, res) => {
+    const { percentage, date, insurance } = req.body;
+    try {
+        const { data, error } = await supabase
+            .from('risk_closure')
+            .insert([{ percentage, date, insurance }])
+            .select();
+
+        if (error) {
+            console.error('Error inserting data:', error.message);
+            return res.status(500).json({ error: 'Failed to insert new record' });
+        }
+        res.status(201).json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

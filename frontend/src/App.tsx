@@ -5,17 +5,25 @@ import Grid from './Grid'; // Import Grid
 import './styles.css'; 
 import { Routes, Route } from 'react-router-dom';
 import Gaps from './Gaps';
+import RiskScore from './RiskScore'; // Import the new component
 
 
 // Define a type for the data you expect from the API.
-interface ChartData {
+interface GapsChartData {
+  date: string;
+  percentage: number;
+  insurance: string;
+}
+
+interface riskChartData {
   date: string;
   percentage: number;
   insurance: string;
 }
 
 function App() {
-  const [chartData, setChartData] = useState<ChartData[]>([]);
+  const [GapschartData, setChartData] = useState<GapsChartData[]>([]);
+  const [riskchartData, setriskChartData] = useState<riskChartData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,8 +41,26 @@ function App() {
         setLoading(false);
       })
       .catch(error => {
-        console.error('Failed to fetch chart data:', error);
-        setError('Failed to load chart data.');
+        console.error('Failed to fetch gap chart data:', error);
+        setError('Failed to load gap chart data.');
+        setLoading(false);
+      });
+
+    // Fetch data for risk score chart
+      fetch('/api/chart-data/risk-score')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        setriskChartData(data);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Failed to fetch risk chart data:', error);
+        setError('Failed to load risk chart data.');
         setLoading(false);
       });
   }, []);
@@ -59,7 +85,8 @@ return (
               {/* Existing dashboard content */}
               <div className="card-white">
                 <div style={{ width: '100%', height: '100%' }}>
-                  <Chart data={chartData} />
+                  <h4 >Care Gap Closure Over Time</h4>
+                  <Chart data={GapschartData} maxY={100}/>
                 </div>
               </div>
               <div className="card-green">
@@ -67,9 +94,10 @@ return (
                   <strong>Risk Score</strong>
                 </p>
               </div>
-              <div className="card-purple">
+              <div className="card-white">
                 <div style={{ width: '100%', height: '100%' }}>
-                  <Chart data={chartData} />
+                  <h4 >Risk Score Over Time</h4>
+                  <Chart data={riskchartData} maxY={70}/>
                 </div>
               </div>
               <div className="card-red">
@@ -91,6 +119,7 @@ return (
         }
       />
       <Route path="/gaps" element={<Gaps />} />
+      <Route path = "/risk" element = {<RiskScore />} />
     </Routes>
   );
 }

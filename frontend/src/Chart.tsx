@@ -13,9 +13,10 @@ interface ChartDataRecord {
 
 interface ChartProps {
   data: ChartDataRecord[];
+  maxY?: number; // Optional prop to set max value for y-axis
 }
 
-const Chart: React.FC<ChartProps> = ({ data }) => {
+const Chart: React.FC<ChartProps> = ({ data, maxY }) => {
   // useRef is a React hook that holds a reference to a DOM element (like our canvas)
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstanceRef = useRef<ChartJS | null>(null);
@@ -82,7 +83,7 @@ const Chart: React.FC<ChartProps> = ({ data }) => {
             beginAtZero: true,
             title: { display: true, text: 'Percentage' },
             min: 0,
-            max: 1
+            max: maxY
           },
           x: {
             type: 'time',
