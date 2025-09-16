@@ -15,11 +15,20 @@ interface ChartData {
   percentage: number;
   insurance: string;
 }
+// NEW: Interface for the earnings data
+interface EarningsChartData {
+  insurance: string;
+  earnings: number;
+}
 
 function App() {
   const [gapsChartData, setGapsChartData] = useState<ChartData[]>([]);
   const [riskChartData, setRiskChartData] = useState<ChartData[]>([]);
+  const [earningsData, setEarningsData] = useState<EarningsChartData[]>([]); // NEW state for earnings
+
+  
   const [gapsLoading, setGapsLoading] = useState(true);
+  const [earningsLoading, setEarningsLoading] = useState(true); // NEW loading state
   const [riskLoading, setRiskLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -41,6 +50,21 @@ function App() {
       })
       .finally(() => setGapsLoading(false));
   }, [isLoggedIn]);
+
+  // NEW: useEffect for earnings data
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    
+    fetch('/api/chart-data/earnings')
+      .then(response => response.json())
+      .then(data => setEarningsData(data))
+      .catch(error => {
+        console.error('Failed to fetch earnings data:', error);
+        setError('Failed to load earnings data.');
+      })
+      .finally(() => setEarningsLoading(false));
+  }, [isLoggedIn]);
+
 
   // Separate useEffect for the Risk Score chart data
   useEffect(() => {
@@ -84,7 +108,7 @@ function App() {
   }
 
   // Handle loading and error for the main dashboard
-  if (gapsLoading || riskLoading) {
+  if (gapsLoading || riskLoading || earningsLoading) {
     return (
       <Layout showHeader={true}>
         <div>Loading chart data...</div>
@@ -110,7 +134,7 @@ function App() {
               <div className="card-white">
                 <div style={{ width: '100%', height: '100%' }}>
                   <h4>Care Gap Closure Over Time</h4>
-                  <Chart data={gapsChartData} maxY={100} graphType='line'/>
+                  <Chart data={gapsChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line'/>
                 </div>
               </div>
               <div className="card-green">
@@ -121,7 +145,7 @@ function App() {
               <div className="card-white">
                 <div style={{ width: '100%', height: '100%' }}>
                   <h4>Risk Score Over Time</h4>
-                  <Chart data={riskChartData} maxY={70} graphType='bar'/>
+                  <Chart data={riskChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='bar'/>
                 </div>
               </div>
               <div className="card-red">
@@ -132,9 +156,7 @@ function App() {
                     </p>
                   </div>
                   <div className="card-subgrid-item">
-                    <p className="text-xl font-semibold text-red-800">
-                      Other Metric
-                    </p>
+                    <Chart data={earningsData} xColumn="insurance" yColumn="earnings" graphType='pie' />
                   </div>
                 </div>
               </div>

@@ -126,6 +126,24 @@ app.post('/api/risk', async (req, res) => {
     }
 });
 
+//Endpoint for earnings data
+app.get('/api/chart-data/earnings', async (req, res) => { // This is the new part
+  try {
+    const { data, error } = await supabase
+      .from('closure_earnings')
+      .select('insurance, earnings');
+
+    if (error) {
+      console.error('Error fetching earnings data:', error.message);
+      return res.status(500).json({ error: 'Failed to fetch earnings data' });
+    }
+    res.json(data);
+  } catch (e) {
+    console.error('Server error:', e);
+    res.status(500).json({ error: 'An unexpected error occurred' });
+  }
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

@@ -23,6 +23,7 @@ const Gaps: React.FC = () => {
   const [resetKey, setResetKey] = useState(0); // New state to control the form reset
 
   const fetchChartData = async () => {
+    
     try {
       const response = await fetch('/api/chart-data');
       if (!response.ok) {
@@ -112,7 +113,7 @@ const Gaps: React.FC = () => {
           </div>
         </div>
         <div className="gaps-chart-full-width-container">
-          <Chart data={chartData} maxY={100}/>
+          <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line'/>
         </div>
       </div>
     </Layout>

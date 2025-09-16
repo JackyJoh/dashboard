@@ -1,24 +1,29 @@
 import React, { useEffect, useRef } from 'react';
-import { Chart as ChartJS, registerables, type ChartTypeRegistry } from 'chart.js';
+import { Chart as ChartJS, registerables } from 'chart.js';
 import 'chartjs-adapter-luxon';
 
 ChartJS.register(...registerables);
 
-// Define a type for the data you expect. This is a good practice in TypeScript.
-interface ChartDataRecord {
-  date: string;
-  percentage: number;
-  insurance: string;
-}
-
 interface ChartProps {
-  data: ChartDataRecord[];
-  maxY?: number; // Optional prop to set max value for y-axis
-  graphType?: keyof ChartTypeRegistry; // Optional prop to set chart type (default is 'line')
+  data: any[];
+  graphType: 'line' | 'bar' | 'donut' | 'pie';
+  xColumn?: string;
+  yColumn?: string;
+  groupColumn?: string;
+  maxY?: number;
 }
 
-const Chart: React.FC<ChartProps> = ({ data, maxY, graphType }) => {
-  // useRef is a React hook that holds a reference to a DOM element (like our canvas)
+// Define a set of up to 6 distinct colors
+const COLORS = [
+  'rgba(255, 99, 132, 1)', // Red
+  'rgba(54, 162, 235, 1)', // Blue
+  'rgba(255, 206, 86, 1)', // Yellow
+  'rgba(75, 192, 192, 1)', // Teal
+  'rgba(153, 102, 255, 1)', // Purple
+  'rgba(255, 159, 64, 1)'  // Orange
+];
+
+const Chart: React.FC<ChartProps> = ({ data, graphType, xColumn, yColumn, groupColumn, maxY }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstanceRef = useRef<ChartJS | null>(null);
 
@@ -27,7 +32,6 @@ const Chart: React.FC<ChartProps> = ({ data, maxY, graphType }) => {
       return;
     }
 
-    // Destroy the previous chart instance before creating a new one
     if (chartInstanceRef.current) {
       chartInstanceRef.current.destroy();
     }
@@ -36,69 +40,103 @@ const Chart: React.FC<ChartProps> = ({ data, maxY, graphType }) => {
     if (!ctx) {
       return;
     }
-
-    // This is where we will replicate the logic from your original HTML file
-    // to group data and create datasets.
-    const groupedData = data.reduce((acc, record) => {
-      const groupKey = record.insurance;
-      if (!acc[groupKey]) {
-        acc[groupKey] = [];
+    
+    let labels: string[] = [];
+    let datasets: any[] = [];
+    let options: any = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true },
+        tooltip: { mode: 'index', intersect: false }
       }
-      acc[groupKey].push(record);
-      return acc;
-    }, {} as Record<string, ChartDataRecord[]>);
+    };
 
-    const labels = [...new Set(data.map(record => record.date))].sort();
+    if (graphType === 'line' || graphType === 'bar') {
+      const records = data;
+      const allLabels = [...new Set(records.map(record => record[xColumn!]))].sort();
+      labels = allLabels;
 
-    const datasets = Object.keys(groupedData).map(groupKey => {
-      const groupRecords = groupedData[groupKey];
-      const randomColor = `rgba(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, 1)`;
+      if (groupColumn) {
+        const groupedData = records.reduce((acc, record) => {
+          const groupKey = record[groupColumn];
+          if (!acc[groupKey]) {
+            acc[groupKey] = [];
+          }
+          acc[groupKey].push(record);
+          return acc;
+        }, {} as Record<string, any[]>);
 
-      const dataPoints = labels.map(date => {
-        const record = groupRecords.find(r => r.date === date);
-        return record ? record.percentage : null;
-      });
+        datasets = Object.keys(groupedData).map((groupKey, index) => {
+          const groupRecords = groupedData[groupKey];
+          // Use a color from the predefined array, cycle through them
+          const color = COLORS[index % COLORS.length]; 
+          
+          const dataPoints = allLabels.map(label => {
+            const record = groupRecords.find(r => r[xColumn!] === label);
+            return record ? record[yColumn!] : null;
+          });
 
-      return {
-        label: groupKey,
-        data: dataPoints,
-        backgroundColor: randomColor.replace('1)', '0.5)'),
-        borderColor: randomColor,
-        borderWidth: 2,
-        tension: 0.4,
-        fill: false,
+          return {
+            label: groupKey,
+            data: dataPoints,
+            backgroundColor: color.replace('1)', '0.5)'), // Lighter fill
+            borderColor: color,
+            borderWidth: 2,
+            tension: 0.4,
+            fill: false,
+          };
+        });
+      } else {
+        // For single line/bar chart, use the first color
+        const color = COLORS[0]; 
+        datasets = [{
+          label: yColumn,
+          data: records.map(record => record[yColumn!]),
+          backgroundColor: color.replace('1)', '0.5)'),
+          borderColor: color,
+          borderWidth: 2,
+          tension: 0.1,
+          fill: false,
+        }];
+      }
+
+      options.scales = {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: yColumn },
+          min: 0,
+          max: maxY
+        },
+        x: {
+          type: 'time',
+          time: { unit: 'month', tooltipFormat: 'MMM yyyy', displayFormats: { month: 'MMM yyyy' } },
+          title: { display: true, text: xColumn }
+        }
       };
-    });
+
+    } else if (graphType === 'pie' || graphType === 'donut') {
+      const pieData = data.map(item => item[yColumn!]);
+      const pieLabels = data.map(item => item[xColumn!]);
+      
+      // Use predefined colors for each segment, cycling if more than 6 segments
+      const backgroundColors = pieLabels.map((_, index) => COLORS[index % COLORS.length]);
+      
+      labels = pieLabels;
+      datasets = [{
+        label: yColumn,
+        data: pieData,
+        backgroundColor: backgroundColors,
+        hoverOffset: 4
+      }];
+    }
 
     chartInstanceRef.current = new ChartJS(ctx, {
-      type: graphType || 'line',
-      data: {
-        labels,
-        datasets
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: { display: true, text: 'Percentage' },
-            min: 0,
-            max: maxY
-          },
-          x: {
-            type: 'time',
-            time: { unit: 'month', tooltipFormat: 'MMM yyyy', displayFormats: { month: 'MMM yyyy' } },
-            title: { display: true, text: 'Date' }
-          }
-        },
-        plugins: {
-          legend: { display: true },
-          tooltip: { mode: 'index', intersect: false }
-        }
-      },
+      type: graphType === 'donut' ? 'doughnut' : graphType,
+      data: { labels, datasets },
+      options
     });
-  }, [data]); // The dependency array ensures the chart re-renders when the data prop changes
+  }, [data, graphType, xColumn, yColumn, groupColumn, maxY]);
 
   return <canvas ref={canvasRef} />;
 };
