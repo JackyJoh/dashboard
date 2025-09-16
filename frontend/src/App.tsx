@@ -86,7 +86,7 @@ return (
               <div className="card-white">
                 <div style={{ width: '100%', height: '100%' }}>
                   <h4 >Care Gap Closure Over Time</h4>
-                  <Chart data={GapschartData} maxY={100}/>
+                  <Chart data={GapschartData} maxY={100} graphType='line'/>
                 </div>
               </div>
               <div className="card-green">
@@ -97,7 +97,7 @@ return (
               <div className="card-white">
                 <div style={{ width: '100%', height: '100%' }}>
                   <h4 >Risk Score Over Time</h4>
-                  <Chart data={riskchartData} maxY={70}/>
+                  <Chart data={riskchartData} maxY={70} graphType='bar'/>
                 </div>
               </div>
               <div className="card-red">

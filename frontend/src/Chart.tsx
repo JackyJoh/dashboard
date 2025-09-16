@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Chart as ChartJS, registerables } from 'chart.js';
+import { Chart as ChartJS, registerables, type ChartTypeRegistry } from 'chart.js';
 import 'chartjs-adapter-luxon';
 
 ChartJS.register(...registerables);
@@ -14,9 +14,10 @@ interface ChartDataRecord {
 interface ChartProps {
   data: ChartDataRecord[];
   maxY?: number; // Optional prop to set max value for y-axis
+  graphType?: keyof ChartTypeRegistry; // Optional prop to set chart type (default is 'line')
 }
 
-const Chart: React.FC<ChartProps> = ({ data, maxY }) => {
+const Chart: React.FC<ChartProps> = ({ data, maxY, graphType }) => {
   // useRef is a React hook that holds a reference to a DOM element (like our canvas)
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstanceRef = useRef<ChartJS | null>(null);
@@ -70,7 +71,7 @@ const Chart: React.FC<ChartProps> = ({ data, maxY }) => {
     });
 
     chartInstanceRef.current = new ChartJS(ctx, {
-      type: 'line',
+      type: graphType || 'line',
       data: {
         labels,
         datasets
