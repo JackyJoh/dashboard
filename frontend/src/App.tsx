@@ -1,92 +1,116 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Chart from './Chart';
-import Layout from './Layout'; // Import the new Layout component
-import Grid from './Grid'; // Import Grid
-import './styles.css'; 
-import { Routes, Route } from 'react-router-dom';
+import Layout from './Layout';
+import Grid from './Grid';
+import './styles.css';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import Gaps from './Gaps';
-import RiskScore from './RiskScore'; // Import the new component
-
+import RiskScore from './RiskScore';
+import Login from './Login';
+import { useBodyClass } from './useBodyClass';
 
 // Define a type for the data you expect from the API.
-interface GapsChartData {
-  date: string;
-  percentage: number;
-  insurance: string;
-}
-
-interface riskChartData {
+interface ChartData {
   date: string;
   percentage: number;
   insurance: string;
 }
 
 function App() {
-  const [GapschartData, setChartData] = useState<GapsChartData[]>([]);
-  const [riskchartData, setriskChartData] = useState<riskChartData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [gapsChartData, setGapsChartData] = useState<ChartData[]>([]);
+  const [riskChartData, setRiskChartData] = useState<ChartData[]>([]);
+  const [gapsLoading, setGapsLoading] = useState(true);
+  const [riskLoading, setRiskLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
+
+  // Use the custom hook to manage the 'sidebar-open' class on the body
+  useBodyClass('sidebar-open', isLoggedIn);
 
   useEffect(() => {
-    // Fetch data from our Express API endpoint
+    
+    if (!isLoggedIn) return;
+
     fetch('/api/chart-data')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setChartData(data);
-        setLoading(false);
-      })
+      .then(response => response.json())
+      .then(data => setGapsChartData(data))
       .catch(error => {
         console.error('Failed to fetch gap chart data:', error);
         setError('Failed to load gap chart data.');
-        setLoading(false);
-      });
+      })
+      .finally(() => setGapsLoading(false));
+  }, [isLoggedIn]);
 
-    // Fetch data for risk score chart
-      fetch('/api/chart-data/risk-score')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setriskChartData(data);
-        setLoading(false);
-      })
+  // Separate useEffect for the Risk Score chart data
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    fetch('/api/chart-data/risk-score')
+      .then(response => response.json())
+      .then(data => setRiskChartData(data))
       .catch(error => {
         console.error('Failed to fetch risk chart data:', error);
         setError('Failed to load risk chart data.');
-        setLoading(false);
-      });
-  }, []);
+      })
+      .finally(() => setRiskLoading(false));
+  }, [isLoggedIn]);
 
-  // Now you can render based on the state
-  if (loading) {
-    return <div>Loading chart data...</div>;
+  // Handle login status and redirect
+  useEffect(() => {
+    //localStorage.removeItem('auth_token'); // For testing purposes, remove this line in production
+
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      setIsLoggedIn(true);
+    } else {
+      setIsLoggedIn(false);
+      navigate('/login');
+    }
+  }, [navigate]);
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    navigate('/');
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login onLogin={handleLogin} />} />
+        <Route path="*" element={<Login onLogin={handleLogin} />} />
+      </Routes>
+    );
+  }
+
+  // Handle loading and error for the main dashboard
+  if (gapsLoading || riskLoading) {
+    return (
+      <Layout showHeader={true}>
+        <div>Loading chart data...</div>
+      </Layout>
+    );
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <Layout showHeader={true}>
+        <div>Error: {error}</div>
+      </Layout>
+    );
   }
 
-
-return (
+  return (
     <Routes>
       <Route
         path="/"
         element={
           <Layout showHeader={true}>
             <Grid>
-              {/* Existing dashboard content */}
               <div className="card-white">
                 <div style={{ width: '100%', height: '100%' }}>
-                  <h4 >Care Gap Closure Over Time</h4>
-                  <Chart data={GapschartData} maxY={100} graphType='line'/>
+                  <h4>Care Gap Closure Over Time</h4>
+                  <Chart data={gapsChartData} maxY={100} graphType='line'/>
                 </div>
               </div>
               <div className="card-green">
@@ -96,8 +120,8 @@ return (
               </div>
               <div className="card-white">
                 <div style={{ width: '100%', height: '100%' }}>
-                  <h4 >Risk Score Over Time</h4>
-                  <Chart data={riskchartData} maxY={70} graphType='bar'/>
+                  <h4>Risk Score Over Time</h4>
+                  <Chart data={riskChartData} maxY={70} graphType='bar'/>
                 </div>
               </div>
               <div className="card-red">
@@ -119,7 +143,7 @@ return (
         }
       />
       <Route path="/gaps" element={<Gaps />} />
-      <Route path = "/risk" element = {<RiskScore />} />
+      <Route path="/risk" element={<RiskScore />} />
     </Routes>
   );
 }
