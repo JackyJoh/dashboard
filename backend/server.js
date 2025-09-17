@@ -1,73 +1,53 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
-const jwt = require('jsonwebtoken'); // Import JWT
-require('dotenv').config(); // Load environment variables from .env file
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 const app = express();
 
-// 1. Get Supabase credentials from environment variables
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Middleware to parse JSON request bodies
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-//Base test get
-app.get('/', (req, res) => {
-    res.send('Hello from the Express server!');
-});
-
-//Login endpoint
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-
-  // Simple check for shared credentials
-  if (username === process.env.SHARED_USERNAME && password === process.env.SHARED_PASSWORD) {
-    const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    return res.json({ token });
-  }
-
-  res.status(401).json({ message: 'Invalid credentials' });
-});
-
-//Middleware to authenticate JWT
+// Middleware to authenticate JWT
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-  if (token == null) return res.sendStatus(401); // Unauthorized
+    if (token == null) return res.sendStatus(401);
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403); // Forbidden
-    req.user = user;
-    next();
-  });
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403);
+        req.user = user;
+        next();
+    });
 }
 
+// Endpoint to get chart data for gaps
+app.get('/api/chart-data', authenticateToken, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('closure_percentage')
+            .select('date, percentage, insurance')
+            .order('date', { ascending: true });
 
-// Endpoint to fetch chart data for gaps
-app.get('/api/chart-data', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('closure_percentage')
-      .select('date, percentage, insurance')
-      .order('date', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching data from Supabase:', error.message);
-      return res.status(500).json({ error: 'Failed to fetch data' });
+        if (error) {
+            console.error('Error fetching data from Supabase:', error.message);
+            return res.status(500).json({ error: 'Failed to fetch data' });
+        }
+        res.json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
     }
-
-    res.json(data);
-  } catch (e) {
-    console.error('Server error:', e);
-    res.status(500).json({ error: 'An unexpected error occurred' });
-  }
 });
 
-
-app.post('/api/gaps', async (req, res) => {
+// Endpoint to post new data for gaps
+app.post('/api/gaps', authenticateToken, async (req, res) => {
     const { percentage, date, insurance } = req.body;
     try {
         const { data, error } = await supabase
@@ -86,28 +66,27 @@ app.post('/api/gaps', async (req, res) => {
     }
 });
 
+// Endpoint to get risk score data
+app.get('/api/chart-data/risk-score', authenticateToken, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('risk_closure')
+            .select('date, percentage, insurance')
+            .order('date', { ascending: true });
 
-// New endpoint for risk score data
-app.get('/api/chart-data/risk-score', async (req, res) => {
-  try {
-    const { data, error } = await supabase
-      .from('risk_closure')
-      .select('date, percentage, insurance')
-      .order('date', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching data from Supabase:', error.message);
-      return res.status(500).json({ error: 'Failed to fetch data' });
+        if (error) {
+            console.error('Error fetching data from Supabase:', error.message);
+            return res.status(500).json({ error: 'Failed to fetch data' });
+        }
+        res.json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
     }
-
-    res.json(data);
-  } catch (e) {
-    console.error('Server error:', e);
-    res.status(500).json({ error: 'An unexpected error occurred' });
-  }
 });
 
-app.post('/api/risk', async (req, res) => {
+// Endpoint to post new risk score data
+app.post('/api/risk', authenticateToken, async (req, res) => {
     const { percentage, date, insurance } = req.body;
     try {
         const { data, error } = await supabase
@@ -126,24 +105,33 @@ app.post('/api/risk', async (req, res) => {
     }
 });
 
-//Endpoint for earnings data
-app.get('/api/chart-data/earnings', async (req, res) => { // This is the new part
-  try {
-    const { data, error } = await supabase
-      .from('closure_earnings')
-      .select('insurance, earnings');
+// Endpoint to get earnings data
+app.get('/api/chart-data/earnings', authenticateToken, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('closure_earnings')
+            .select('insurance, earnings');
 
-    if (error) {
-      console.error('Error fetching earnings data:', error.message);
-      return res.status(500).json({ error: 'Failed to fetch earnings data' });
+        if (error) {
+            console.error('Error fetching earnings data:', error.message);
+            return res.status(500).json({ error: 'Failed to fetch earnings data' });
+        }
+        res.json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
     }
-    res.json(data);
-  } catch (e) {
-    console.error('Server error:', e);
-    res.status(500).json({ error: 'An unexpected error occurred' });
-  }
 });
 
+// Login endpoint
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    if (username === process.env.SHARED_USERNAME && password === process.env.SHARED_PASSWORD) {
+        const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        return res.json({ token });
+    }
+    res.status(401).json({ message: 'Invalid credentials' });
+});
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

@@ -3,6 +3,8 @@ import Layout from './Layout';
 import DataEntryForm from './DataEntryForm';
 import type { FormField } from './DataEntryForm';
 import Chart from './Chart';
+import { useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from './api';
 
 interface ChartDataRecord {
   date: string;
@@ -20,15 +22,12 @@ const Gaps: React.FC = () => {
   const [chartData, setChartData] = useState<ChartDataRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resetKey, setResetKey] = useState(0); // New state to control the form reset
+  const [resetKey, setResetKey] = useState(0);
+  const navigate = useNavigate();
 
   const fetchChartData = async () => {
-    
     try {
-      const response = await fetch('/api/chart-data');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      const response = await fetchWithAuth('/api/chart-data', {}, navigate);
       const data = await response.json();
       setChartData(data);
       setLoading(false);
@@ -57,24 +56,18 @@ const Gaps: React.FC = () => {
     }
 
     try {
-      const response = await fetch('/api/gaps', {
+      const response = await fetchWithAuth('/api/gaps', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ percentage, date, insurance }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to add new data entry.');
-      }
+      }, navigate);
       
       const newEntry = await response.json();
       console.log('New entry added successfully:', newEntry);
 
-      // Reset the form by updating the resetKey
       setResetKey(prevKey => prevKey + 1);
-
       await fetchChartData();
       
     } catch (error) {
@@ -103,7 +96,7 @@ const Gaps: React.FC = () => {
               title="Add New Care Gap Data Point"
               fields={gapsFormFields}
               onSubmit={handleFormSubmit}
-              resetKey={resetKey} // Pass the reset key to the child component
+              resetKey={resetKey}
             />
           </div>
           <div className="gaps-top-row-item">

@@ -1,17 +1,27 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './styles.css';
 
 const Sidebar: React.FC = () => {
   return (
     <div id="sidebar" className="sidebar">
-      <ul>
-        <li><a href="/">Dashboard</a></li>
-        <li><a href="/gaps">Care Gap Closure</a></li>
-        <li><a href="/entry">Patient Access Goals</a></li>
-        <li><a href="/risk">Risk Score</a></li>
-        <li><a href="/other">Other</a></li>
-      </ul>
+  <ul>
+    <li><Link to="/" className="sidebar-link">Dashboard</Link></li>
+    <li><Link to="/gaps" className="sidebar-link">Care Gap Closure</Link></li>
+    <li><Link to="/entry" className="sidebar-link">Patient Access Goals</Link></li>
+    <li><Link to="/risk" className="sidebar-link">Risk Score</Link></li>
+    <li><Link to="/other" className="sidebar-link">Other</Link></li>
+  </ul>
+  <div className="sidebar-footer">
+    <div className="sidebar-footer-links">
+      <a href="/settings" className="sidebar-settings-link">
+        <img src="/settings.png" alt="Settings" className="sidebar-settings-icon" />
+      </a>
+      <img src="logo.png" alt="Logo" className="sidebar-logo" />
     </div>
+    <p>Naples Comprehensive Health</p>
+  </div>
+</div>
   );
 };
 

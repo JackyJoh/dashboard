@@ -3,6 +3,7 @@ import Layout from './Layout';
 import DataEntryForm from './DataEntryForm';
 import type { FormField } from './DataEntryForm';
 import Chart from './Chart';
+import { fetchWithAuth } from './api'; // Import the new utility
 
 interface ChartDataRecord {
   date: string;
@@ -24,16 +25,13 @@ const RiskScore: React.FC = () => {
 
   const fetchChartData = async () => {
     try {
-      const response = await fetch('/api/chart-data/risk-score');
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
+      const response = await fetchWithAuth('/api/chart-data/risk-score');
       const data = await response.json();
       setChartData(data);
-      setLoading(false);
     } catch (error) {
       console.error('Failed to fetch chart data:', error);
       setError('Failed to load chart data.');
+    } finally {
       setLoading(false);
     }
   };

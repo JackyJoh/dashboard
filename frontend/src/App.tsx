@@ -8,6 +8,8 @@ import Gaps from './Gaps';
 import RiskScore from './RiskScore';
 import Login from './Login';
 import { useBodyClass } from './useBodyClass';
+import { fetchWithAuth } from './api';
+import Settings from './Settings';
 
 // Define a type for the data you expect from the API.
 interface ChartData {
@@ -25,7 +27,6 @@ function App() {
   const [gapsChartData, setGapsChartData] = useState<ChartData[]>([]);
   const [riskChartData, setRiskChartData] = useState<ChartData[]>([]);
   const [earningsData, setEarningsData] = useState<EarningsChartData[]>([]); // NEW state for earnings
-
   
   const [gapsLoading, setGapsLoading] = useState(true);
   const [earningsLoading, setEarningsLoading] = useState(true); // NEW loading state
@@ -37,53 +38,51 @@ function App() {
   // Use the custom hook to manage the 'sidebar-open' class on the body
   useBodyClass('sidebar-open', isLoggedIn);
 
+
+  // Separate useEffect for the Gaps chart data
   useEffect(() => {
-    
     if (!isLoggedIn) return;
 
-    fetch('/api/chart-data')
-      .then(response => response.json())
-      .then(data => setGapsChartData(data))
-      .catch(error => {
-        console.error('Failed to fetch gap chart data:', error);
-        setError('Failed to load gap chart data.');
-      })
-      .finally(() => setGapsLoading(false));
-  }, [isLoggedIn]);
+    fetchWithAuth('/api/chart-data', {}, navigate)
+        .then(response => response.json())
+        .then(data => setGapsChartData(data))
+        .catch(error => {
+            console.error('Failed to fetch gap chart data:', error);
+            setError('Failed to load gap chart data.');
+        })
+        .finally(() => setGapsLoading(false));
+}, [isLoggedIn, navigate]);
 
   // NEW: useEffect for earnings data
   useEffect(() => {
     if (!isLoggedIn) return;
-    
-    fetch('/api/chart-data/earnings')
-      .then(response => response.json())
-      .then(data => setEarningsData(data))
-      .catch(error => {
-        console.error('Failed to fetch earnings data:', error);
-        setError('Failed to load earnings data.');
-      })
-      .finally(() => setEarningsLoading(false));
-  }, [isLoggedIn]);
 
+    fetchWithAuth('/api/chart-data/earnings', {}, navigate)
+        .then(response => response.json())
+        .then(data => setEarningsData(data))
+        .catch(error => {
+            console.error('Failed to fetch earnings data:', error);
+            setError('Failed to load earnings data.');
+        })
+        .finally(() => setEarningsLoading(false));
+}, [isLoggedIn, navigate]);
 
-  // Separate useEffect for the Risk Score chart data
+  //useEffect for the Risk Score chart data
   useEffect(() => {
     if (!isLoggedIn) return;
 
-    fetch('/api/chart-data/risk-score')
-      .then(response => response.json())
-      .then(data => setRiskChartData(data))
-      .catch(error => {
-        console.error('Failed to fetch risk chart data:', error);
-        setError('Failed to load risk chart data.');
-      })
-      .finally(() => setRiskLoading(false));
-  }, [isLoggedIn]);
+    fetchWithAuth('/api/chart-data/risk-score', {}, navigate)
+        .then(response => response.json())
+        .then(data => setRiskChartData(data))
+        .catch(error => {
+            console.error('Failed to fetch risk chart data:', error);
+            setError('Failed to load risk chart data.');
+        })
+        .finally(() => setRiskLoading(false));
+}, [isLoggedIn, navigate]);
 
   // Handle login status and redirect
   useEffect(() => {
-    //localStorage.removeItem('auth_token'); // For testing purposes, remove this line in production
-
     const token = localStorage.getItem('auth_token');
     if (token) {
       setIsLoggedIn(true);
@@ -166,6 +165,7 @@ function App() {
       />
       <Route path="/gaps" element={<Gaps />} />
       <Route path="/risk" element={<RiskScore />} />
+      <Route path="/settings" element={<Settings />} />
     </Routes>
   );
 }
