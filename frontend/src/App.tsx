@@ -11,13 +11,12 @@ import { useBodyClass } from './useBodyClass';
 import { fetchWithAuth } from './api';
 import Settings from './Settings';
 
-// Define a type for the data you expect from the API.
+//Define a type for the data you expect from the API.
 interface ChartData {
   date: string;
   percentage: number;
   insurance: string;
 }
-// NEW: Interface for the earnings data
 interface EarningsChartData {
   insurance: string;
   earnings: number;
@@ -26,66 +25,55 @@ interface EarningsChartData {
 function App() {
   const [gapsChartData, setGapsChartData] = useState<ChartData[]>([]);
   const [riskChartData, setRiskChartData] = useState<ChartData[]>([]);
-  const [earningsData, setEarningsData] = useState<EarningsChartData[]>([]); // NEW state for earnings
+  const [earningsData, setEarningsData] = useState<EarningsChartData[]>([]);
   
   const [gapsLoading, setGapsLoading] = useState(true);
-  const [earningsLoading, setEarningsLoading] = useState(true); // NEW loading state
+  const [earningsLoading, setEarningsLoading] = useState(true);
   const [riskLoading, setRiskLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
 
-  // Use the custom hook to manage the 'sidebar-open' class on the body
   useBodyClass('sidebar-open', isLoggedIn);
 
+  //fetches all dashboard data in parallel
+  const fetchAllDashboardData = async () => {
+    try {
+      const gapsPromise = fetchWithAuth('/api/chart-data', {}, navigate);
+      const riskPromise = fetchWithAuth('/api/chart-data/risk-score', {}, navigate);
+      const earningsPromise = fetchWithAuth('/api/chart-data/earnings', {}, navigate);
 
-  // Separate useEffect for the Gaps chart data
-  useEffect(() => {
-    if (!isLoggedIn) return;
+      const [gapsResponse, riskResponse, earningsResponse] = await Promise.all([
+        gapsPromise,
+        riskPromise,
+        earningsPromise,
+      ]);
 
-    fetchWithAuth('/api/chart-data', {}, navigate)
-        .then(response => response.json())
-        .then(data => setGapsChartData(data))
-        .catch(error => {
-            console.error('Failed to fetch gap chart data:', error);
-            setError('Failed to load gap chart data.');
-        })
-        .finally(() => setGapsLoading(false));
-}, [isLoggedIn, navigate]);
+      const [gapsData, riskData, earningsData] = await Promise.all([
+        gapsResponse.json(),
+        riskResponse.json(),
+        earningsResponse.json(),
+      ]);
 
-  // NEW: useEffect for earnings data
-  useEffect(() => {
-    if (!isLoggedIn) return;
+      setGapsChartData(gapsData);
+      setRiskChartData(riskData);
+      setEarningsData(earningsData);
+    } catch (e) {
+      console.error('Failed to fetch dashboard data:', e);
+      setError('Failed to load dashboard data.');
+    } finally {
+      setGapsLoading(false);
+      setRiskLoading(false);
+      setEarningsLoading(false);
+    }
+  };
 
-    fetchWithAuth('/api/chart-data/earnings', {}, navigate)
-        .then(response => response.json())
-        .then(data => setEarningsData(data))
-        .catch(error => {
-            console.error('Failed to fetch earnings data:', error);
-            setError('Failed to load earnings data.');
-        })
-        .finally(() => setEarningsLoading(false));
-}, [isLoggedIn, navigate]);
-
-  //useEffect for the Risk Score chart data
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    fetchWithAuth('/api/chart-data/risk-score', {}, navigate)
-        .then(response => response.json())
-        .then(data => setRiskChartData(data))
-        .catch(error => {
-            console.error('Failed to fetch risk chart data:', error);
-            setError('Failed to load risk chart data.');
-        })
-        .finally(() => setRiskLoading(false));
-}, [isLoggedIn, navigate]);
-
-  // Handle login status and redirect
+  //runs on initial load and handles login status
   useEffect(() => {
     const token = localStorage.getItem('auth_token');
     if (token) {
       setIsLoggedIn(true);
+      fetchAllDashboardData();
     } else {
       setIsLoggedIn(false);
       navigate('/login');
@@ -106,7 +94,6 @@ function App() {
     );
   }
 
-  // Handle loading and error for the main dashboard
   if (gapsLoading || riskLoading || earningsLoading) {
     return (
       <Layout showHeader={true}>
@@ -144,7 +131,7 @@ function App() {
               <div className="card-white">
                 <div style={{ width: '100%', height: '100%' }}>
                   <h4>Risk Score Over Time</h4>
-                  <Chart data={riskChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='bar'/>
+                  <Chart data={riskChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='line'/>
                 </div>
               </div>
               <div className="card-red">

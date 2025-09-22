@@ -133,6 +133,45 @@ app.post('/api/login', (req, res) => {
     res.status(401).json({ message: 'Invalid credentials' });
 });
 
+// Endpoint to fetch all data for the table view
+app.get('/api/table-data', authenticateToken, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('closure_percentage')
+            .select('*')
+            .order('date', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching table data:', error.message);
+            return res.status(500).json({ error: 'Failed to fetch table data' });
+        }
+        res.json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
+// Endpoint to delete a row from the table
+app.delete('/api/table-data/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { error } = await supabase
+            .from('closure_percentage')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting record:', error.message);
+            return res.status(500).json({ error: 'Failed to delete record' });
+        }
+        res.status(200).json({ message: `Record with id ${id} deleted successfully.` });
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

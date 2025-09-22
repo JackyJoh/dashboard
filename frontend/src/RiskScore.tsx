@@ -110,7 +110,7 @@ const RiskScore: React.FC = () => {
           </div>
         </div>
         <div className="gaps-chart-full-width-container">
-          <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='bar'/>
+          <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='line'/>
         </div>
       </div>
     </Layout>
