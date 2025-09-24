@@ -33,7 +33,7 @@ html, body {
     justify-content: space-between;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     height: 4rem;
-    width: 100%;
+    width: 100vw;
 }
 .header-button {
     padding: 0.5rem;
@@ -375,24 +375,6 @@ html, body {
   height: auto;
 }
 
-/* Old custom styles for sidebar functionality */
-@media (max-width: 767px) {
-  #sidebar {
-    transform: translateX(-100%);
-    position: fixed;
-    height: 100%;
-    z-index: 50;
-    width: 75%;
-    top: 0;
-    left: 0;
-  }
-  body.sidebar-open #sidebar {
-    transform: translateX(0);
-  }
-  body.sidebar-open #overlay {
-    display: block;
-  }
-}
 @media (min-width: 768px) {
   body.sidebar-open #main-content-area {
     margin-left: 0.75rem;
@@ -509,40 +491,159 @@ html, body {
 .login-form button:hover {
   background-color: #38a169; /* Darker green on hover */
 }
-/* Table container and wrapper styles combined */
+
+
+/* Settings page styling */
+.settings-page-container {
+  padding: 1rem;
+  padding-left: 0rem;
+  padding-right: 0rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0rem;
+  padding-bottom: 0rem;
+  width: 100%;
+  flex-grow: 1; /* allow page content to fill available vertical space */
+  min-height: 0; /* allow children to control scrolling */
+}
+
+.settings-subtitle {
+  font-size: 1.25rem;
+  color: black;
+  margin-top: 0rem;
+  margin-bottom: 1rem;
+}
+
+.settings-card {
+  background-color: #ffffff;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem 2rem;
+  border: 1px solid #e2e8f0;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Specific tweaks for the table card so it stretches and its inner scroller works */
+.settings-card.table-data-card {
+  /* already a flex column from .settings-card; ensure it can shrink/grow inside parent */
+  flex-grow: 1;
+  min-height: 0; /* required so children with overflow can scroll correctly */
+}
+
+/* Keep non-table cards (like the 'Manage data tables' card) a stable size
+   so selecting a new table doesn't change the page layout. */
+.settings-card:not(.table-data-card) {
+  flex: 0 0 auto; /* do not grow or shrink */
+  min-height: 4.5rem; /* maintain a consistent header/control area height */
+}
+
+.settings-card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+
+.settings-card-description {
+  font-size: 0.95rem;
+  color: #6a768c;
+  margin-bottom: 1rem;
+}
+
+.table-selector-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0rem;
+}
+
+.table-selector-label {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 1rem;
+}
+
+.table-select-styled {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cbd5e0;
+  background-color: #f7fafc;
+  font-size: 1rem;
+  color: #2d3748;
+  appearance: none;
+}
+
+/* This is the div that will hold the static header. */
+.table-header-wrapper {
+  background-color: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* This is the div that will handle the scrolling for the table body. */
 .table-wrapper {
-  overflow-x: auto;
   overflow-y: auto;
-  max-height: calc(100vh - 10.25rem);
+  flex-grow: 1;
   background-color: #fff;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 1rem;
+  padding: 0; /* remove inner padding so rows cannot appear above the sticky header */
   width: 100%;
+  /* Remove fixed max-height so the wrapper can stretch to the card bottom */
+  min-height: 0; /* allow proper flexbox scrolling behavior */
 }
 
 .data-table {
   width: 100%;
-  border-collapse: collapse;
+  table-layout: auto; /* allow columns to size to content - auto spreading */
+  /* Use separate border-box for better interaction with sticky headers */
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 0.9rem;
   color: #333;
 }
+
+/* keep a small visual gap between the card and table without using the wrapper padding */
+.table-spacer {
+  height: 0.75rem; /* visual gap above the scroll area, outside the scroller */
+}
+
 .data-table th,
 .data-table td {
   padding: 0.75rem;
   text-align: left;
   border-bottom: 1px solid #e5e7eb;
 }
-.data-table th {
+
+/* The header is no longer sticky, as it is in a separate, non-scrolling div. */
+.data-table thead {
   background-color: #f3f4f6;
   font-weight: 600;
   text-transform: uppercase;
 }
+
+/* The th elements will now inherit the background from the parent thead. */
+.data-table th {
+  /* make header stay visible while tbody scrolls */
+  position: sticky;
+  top: 0; /* spacer above the scrollable area provides visual gap */
+  z-index: 50; /* high z-index to remain above scrolling rows */
+  background-color: #f3f4f6; /* ensure sticky header has same background */
+  box-shadow: 0 2px 0 rgba(0,0,0,0.03);
+}
+
+/* Make cells positioned so z-index behaves predictably and rows stay under the header */
+.data-table td {
+  position: relative;
+  z-index: 1;
+  background-clip: padding-box; /* ensure background doesn't bleed into the sticky header area */
+}
+
 .data-table tbody tr:hover {
   background-color: #f9fafb;
 }
 
-/* Delete button style */
 .delete-button {
   background-color: #ef4444;
   color: #fff;
@@ -553,20 +654,59 @@ html, body {
   font-weight: 600;
   transition: background-color 0.2s ease-in-out;
 }
+
 .delete-button:hover {
   background-color: #dc2626;
 }
 
-/* Table selector styles */
-.table-selector-container {
-  margin-bottom: 1rem;
+/*Loading Screen Styles */
+.loading-container, .app-loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
 }
-.table-selector-container label {
-  font-weight: 600;
-  margin-right: 0.5rem;
+.loading-container {
+  min-height: calc(100vh - 5.5rem);
+  background-color: #f3f4f6;
 }
-.table-select {
-  padding: 0.5rem;
-  border-radius: 0.375rem;
-  border: 1px solid #e5e7eb;
+.loading-box, .app-loading-box {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 4rem;
+  min-height: 90vh;
+  width: 100%;
+}
+.app-loading-box {
+  min-height: 90vh;
+  width: 95%;
+}
+.loading-text, .app-loading-text {
+  font-weight: 700;
+  color: #1a202c;
+  background: linear-gradient(to right, #1a202c 0%, #4f46e5 50%, #1a202c 100%);
+  background-size: 200% auto;
+  background-clip: text; /* standard property for compatibility */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-shift 3s infinite linear;
+}
+.loading-text {
+  font-size: 10rem;
+}
+.app-loading-text {
+  font-size: 12rem;
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: 0% center;
+  }
 }

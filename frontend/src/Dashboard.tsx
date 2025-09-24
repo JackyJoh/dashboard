@@ -62,10 +62,15 @@ const Dashboard: React.FC = () => {
     fetchAllDashboardData();
   }, [navigate]);
 
-  if (gapsLoading || riskLoading || earningsLoading) {
+   if (gapsLoading || riskLoading || earningsLoading) {
+  //if (true) {
     return (
       <Layout showHeader={true}>
-        <div>Loading chart data...</div>
+      <div className="loading-container">
+        <div className="loading-box">
+          <p className="loading-text">Loading...</p>
+        </div>
+      </div>
       </Layout>
     );
   }

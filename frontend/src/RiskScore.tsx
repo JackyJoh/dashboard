@@ -84,7 +84,13 @@ const RiskScore: React.FC = () => {
   }, []);
 
   if (loading) {
-    return <Layout showHeader={false}><div>Loading chart data...</div></Layout>;
+    return (
+      <Layout showHeader={true}>
+        <div className="loading-box">
+          <p className="loading-text">Loading...</p>
+        </div>
+      </Layout>
+    );
   }
 
   if (error) {

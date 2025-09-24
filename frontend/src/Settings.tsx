@@ -1,26 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import './styles.css';
+import Layout from './Layout';
 import { fetchWithAuth } from './api';
 import { useNavigate } from 'react-router-dom';
-import Layout from './Layout';
 import TableView from './TableView';
+import './styles.css';
 
-interface TableDataRecord {
-  id: number;
-  insurance: string;
-  date: string;
-  percentage: number;
-}
 
 const Settings: React.FC = () => {
-  const [tableData, setTableData] = useState<TableDataRecord[]>([]);
+  const [tableData, setTableData] = useState<any[]>([]); // Using 'any[]' for flexibility
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTable, setSelectedTable] = useState('closure_percentage'); // New state for the dropdown
   const navigate = useNavigate();
 
   const fetchTableData = async () => {
     try {
-      const response = await fetchWithAuth('/api/table-data', {}, navigate);
+      const response = await fetchWithAuth(`/api/table-data/${selectedTable}`, {}, navigate);
       const data = await response.json();
       setTableData(data);
     } catch (e) {
@@ -33,8 +28,8 @@ const Settings: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
-      await fetchWithAuth(`/api/table-data/${id}`, { method: 'DELETE' }, navigate);
-      await fetchTableData(); // Refresh the table
+      await fetchWithAuth(`/api/table-data/${selectedTable}/${id}`, { method: 'DELETE' }, navigate);
+      await fetchTableData();
     } catch (e) {
       console.error(e);
       setError('Failed to delete record.');
@@ -43,10 +38,16 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     fetchTableData();
-  }, []);
+  }, [selectedTable]);
 
   if (loading) {
-    return <Layout showHeader={true}><div>Loading...</div></Layout>;
+    return (
+      <Layout showHeader={true}>
+        <div className="loading-box">
+          <p className="loading-text">Loading...</p>
+        </div>
+      </Layout>
+    );
   }
   if (error) {
     return <Layout showHeader={true}><div>Error: {error}</div></Layout>;
@@ -54,26 +55,56 @@ const Settings: React.FC = () => {
   
   const headers = ['id', 'date', 'percentage', 'insurance'];
 
-
- return (
-    <Layout showHeader={true}>
-      <div className="p-4">        
-        {/* New Dropdown Selector */}
+  return (
+  <Layout showHeader={true}>
+    <div className="settings-page-container">
+      <div className="settings-card">
+        <h3 className="settings-subtitle">Manage data tables and configurations</h3>
         <div className="table-selector-container">
-          <label htmlFor="table-selector">Select a Table:</label>
-          <select id="table-selector" className="table-select">
-            <option value="closure_percentage">Care Gap Closure</option>
-            <option value="risk_closure">Risk Closure</option>
+          <label htmlFor="table-selector" className="table-selector-label">
+            Choose a table to view and edit:
+          </label>
+          <select 
+            id="table-selector" 
+            className="table-select-styled"
+            value={selectedTable}
+            onChange={(e) => setSelectedTable(e.target.value)}
+          >
+            <option value="closure_percentage">Care Gap Closure Data</option>
+            <option value="risk_closure">Risk Closure Data</option>
+            <option value="closure_earnings">Closure Earnings Data</option>
           </select>
         </div>
+      </div>
+    
+      <div className="settings-card table-data-card">
+        <h2 className="settings-card-title">
+          Table Data: {selectedTable.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+        </h2>
+        <p className="settings-card-description">
+          Below is the data for the selected table. You can remove individual rows using the delete button.
+        </p>
 
-        <h4 style={{ margin: '0 0 7px 0' }}>Table view option to delete rows</h4>
+        {/* Visual spacer outside the scrollable area so the header can stick at top:0 */}
+        <div className="table-spacer" aria-hidden="true" />
+        {/* Combined Table (thead + scrollable tbody) */}
         <div className="table-wrapper">
-          <TableView data={tableData} onDelete={handleDelete} headers={headers} />
+          <table className="data-table">
+            <thead>
+              <tr>
+                {headers.map(header => (
+                  <th key={header}>{header}</th>
+                ))}
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <TableView data={tableData} onDelete={handleDelete} headers={headers} />
+          </table>
         </div>
       </div>
-    </Layout>
-  );
+    </div>
+  </Layout>
+);
 };
 
 export default Settings;

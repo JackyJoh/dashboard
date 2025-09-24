@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './styles.css';
 import { Routes, Route, useNavigate } from 'react-router-dom';
+import Layout from './Layout'; // Ensure the correct path to Layout component
 import Gaps from './Gaps';
 import RiskScore from './RiskScore';
 import Login from './Login';
@@ -12,11 +13,13 @@ import Dashboard from './Dashboard';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   useBodyClass('sidebar-open', isLoggedIn);
   
   // The main useEffect that runs on initial load and handles login status
   useEffect(() => {
+    //localStorage.removeItem('auth_token');
     const token = localStorage.getItem('auth_token');
     if (token) {
       setIsLoggedIn(true);
@@ -24,12 +27,22 @@ function App() {
       setIsLoggedIn(false);
       navigate('/login');
     }
+    setLoading(false);
   }, [navigate]);
 
   const handleLogin = () => {
     setIsLoggedIn(true);
     navigate('/');
   };
+   if (loading) {
+    return (
+      <Layout showHeader={true}>
+        <div className="loading-box">
+          <p className="loading-text">Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   if (!isLoggedIn) {
     return (

@@ -133,14 +133,17 @@ app.post('/api/login', (req, res) => {
     res.status(401).json({ message: 'Invalid credentials' });
 });
 
-// Endpoint to fetch all data for the table view
-app.get('/api/table-data', authenticateToken, async (req, res) => {
+//fetch all data for the table view
+app.get('/api/table-data/:tableName', authenticateToken, async (req, res) => {
+    const { tableName } = req.params;
+    let query = supabase.from(tableName).select('*');
+    if (tableName === 'closure_percentage' || tableName === 'risk_closure') {
+        query = query.order('date', { ascending: false });
+    } else {
+        query = query.order('id', { ascending: false });
+    }
     try {
-        const { data, error } = await supabase
-            .from('closure_percentage')
-            .select('*')
-            .order('date', { ascending: true });
-
+        const { data, error } = await query;
         if (error) {
             console.error('Error fetching table data:', error.message);
             return res.status(500).json({ error: 'Failed to fetch table data' });
@@ -152,12 +155,12 @@ app.get('/api/table-data', authenticateToken, async (req, res) => {
     }
 });
 
-// Endpoint to delete a row from the table
-app.delete('/api/table-data/:id', authenticateToken, async (req, res) => {
-    const { id } = req.params;
+//delete a row from the table
+app.delete('/api/table-data/:tableName/:id', authenticateToken, async (req, res) => {
+    const { tableName, id } = req.params;
     try {
         const { error } = await supabase
-            .from('closure_percentage')
+            .from(tableName)
             .delete()
             .eq('id', id);
 
