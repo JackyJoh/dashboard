@@ -20,6 +20,7 @@ const gapsFormFields: FormField[] = [
 
 const Gaps: React.FC = () => {
   const [chartData, setChartData] = useState<ChartDataRecord[]>([]);
+  const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
@@ -34,8 +35,17 @@ const Gaps: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch chart data:', error);
       setError('Failed to load chart data.');
-      setLoading(false);
     }
+    try {
+      const response = await fetchWithAuth('/api/gaps/recent-data', {}, navigate);
+      const data = await response.json();
+      setRecentData(data);
+    } catch (error) {
+      console.error('Failed to fetch recent data:', error);
+      setError('Failed to load recent data.');
+    }
+    setLoading(false);
+
   };
 
   const handleFormSubmit = async (formData: Record<string, string>) => {
@@ -106,8 +116,11 @@ const Gaps: React.FC = () => {
             />
           </div>
           <div className="gaps-top-row-item">
-            <div className="gaps-stats-container">
-              <p className="gaps-stats-text">Other Statistics</p>
+            <div className="gaps-stats-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '100%' }}>
+              <p className="gaps-stats-text" style={{ margin: '0.25rem' }}>Most Recent Data</p>
+              <div style={{ width: '100%', maxWidth: 600, height: 300, minHeight: 200 }}>
+                <Chart data={recentData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='bar'/>
+              </div>
             </div>
           </div>
         </div>

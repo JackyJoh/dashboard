@@ -8,6 +8,7 @@ import './styles.css';
 
 const Settings: React.FC = () => {
   const [tableData, setTableData] = useState<any[]>([]); // Using 'any[]' for flexibility
+  const [headers, setHeaders] = useState<string[]>([]); // Dynamic headers
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTable, setSelectedTable] = useState('closure_percentage'); // New state for the dropdown
@@ -18,6 +19,12 @@ const Settings: React.FC = () => {
       const response = await fetchWithAuth(`/api/table-data/${selectedTable}`, {}, navigate);
       const data = await response.json();
       setTableData(data);
+      //Set headers dynamically from first row, if available
+      if (Array.isArray(data) && data.length > 0) {
+        setHeaders(Object.keys(data[0]));
+      } else {
+        setHeaders([]);
+      }
     } catch (e) {
       console.error(e);
       setError('Failed to fetch data.');
@@ -53,7 +60,7 @@ const Settings: React.FC = () => {
     return <Layout showHeader={true}><div>Error: {error}</div></Layout>;
   }
   
-  const headers = ['id', 'date', 'percentage', 'insurance'];
+
 
   return (
   <Layout showHeader={true}>

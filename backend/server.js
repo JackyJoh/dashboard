@@ -27,7 +27,7 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// Endpoint to get chart data for gaps
+//Endpoint to get chart data for gaps
 app.get('/api/chart-data', authenticateToken, async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -46,7 +46,26 @@ app.get('/api/chart-data', authenticateToken, async (req, res) => {
     }
 });
 
-// Endpoint to post new data for gaps
+//get recent data for gaps
+app.get('/api/gaps/recent-data', authenticateToken, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('closure_percentage')
+            .select('date, percentage, insurance')
+            .order('date', { ascending: false })
+            .limit(4); //CHANGE THIS TO HOW MANY INSURANCES THERE ARE
+        if (error) {
+            console.error('Error fetching recent data from Supabase:', error.message);
+            return res.status(500).json({ error: 'Failed to fetch recent data' });
+        }
+        res.json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
+//Endpoint to post new data for gaps
 app.post('/api/gaps', authenticateToken, async (req, res) => {
     const { percentage, date, insurance } = req.body;
     try {
@@ -66,7 +85,7 @@ app.post('/api/gaps', authenticateToken, async (req, res) => {
     }
 });
 
-// Endpoint to get risk score data
+//Endpoint to get risk score data
 app.get('/api/chart-data/risk-score', authenticateToken, async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -85,7 +104,26 @@ app.get('/api/chart-data/risk-score', authenticateToken, async (req, res) => {
     }
 });
 
-// Endpoint to post new risk score data
+//get recent risk score data
+app.get('/api/chart-data/risk-score/recent-data', authenticateToken, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('risk_closure')
+            .select('date, percentage, insurance')
+            .order('date', { ascending: false })
+            .limit(2); //CHANGE THIS TO HOW MANY INSURANCES THERE ARE
+        if (error) {
+            console.error('Error fetching recent data from Supabase:', error.message);
+            return res.status(500).json({ error: 'Failed to fetch recent data' });
+        }
+        res.json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
+//post new risk score data
 app.post('/api/risk', authenticateToken, async (req, res) => {
     const { percentage, date, insurance } = req.body;
     try {
@@ -105,7 +143,7 @@ app.post('/api/risk', authenticateToken, async (req, res) => {
     }
 });
 
-// Endpoint to get earnings data
+//get earnings data
 app.get('/api/chart-data/earnings', authenticateToken, async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -123,7 +161,7 @@ app.get('/api/chart-data/earnings', authenticateToken, async (req, res) => {
     }
 });
 
-// Login endpoint
+//Login endpoint
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
     if (username === process.env.SHARED_USERNAME && password === process.env.SHARED_PASSWORD) {
