@@ -1,8 +1,13 @@
 {
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_API_BASE_URL": "https://nchdashboard.onrender.com"
+    }
+  },
   "rewrites": [
     { 
       "source": "/api/(.*)", 
-      "destination": "https://nchdashboard.onrender.com/api/$1" 
+      "destination": "https://nchdashboard.onrender.com/$1" 
     },
     { 
       "source": "/(.*)", 
