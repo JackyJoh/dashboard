@@ -1,6 +1,12 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://nchdashboard.onrender.com" },
-    { "source": "/(.*)", "destination": "/index.html" } 
+    { 
+      "source": "/api/(.*)", 
+      "destination": "https://nchdashboard.onrender.com/$1" 
+    },
+    { 
+      "source": "/(.*)", 
+      "destination": "/index.html" 
+    } 
   ]
 }
