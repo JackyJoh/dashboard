@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './styles.css';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Layout from './Layout'; // Ensure the correct path to Layout component

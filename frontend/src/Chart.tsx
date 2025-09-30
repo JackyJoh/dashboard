@@ -73,7 +73,7 @@ const Chart: React.FC<ChartProps> = ({ data, graphType, xColumn, yColumn, groupC
           const color = COLORS[index % COLORS.length]; 
           
           const dataPoints = allLabels.map(label => {
-            const record = groupRecords.find(r => r[xColumn!] === label);
+            const record = groupRecords.find((r: any) => r[xColumn!] === label);
             return record ? record[yColumn!] : null;
           });
 

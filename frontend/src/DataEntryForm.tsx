@@ -3,12 +3,12 @@ import type { FormEvent } from 'react';
 import './styles.css';
 
 // This is the structure for our new fields prop
-interface FormField {
-  label: string;
-  name: string;
-  type: 'text' | 'number' | 'date' | 'select';
-  placeholder?: string;
-  options?: string[];
+export interface FormField { 
+    label: string;
+    name: string;
+    type: 'text' | 'number' | 'date' | 'select';
+    placeholder?: string;
+    options?: string[];
 }
 
 interface DataEntryFormProps {
