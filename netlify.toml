@@ -1,0 +1,13 @@
+# netlify.toml
+[build]
+  # Tell Netlify to build the frontend folder
+  base = "frontend"
+  publish = "dist"  # This is where Vite puts the final files
+  command = "npm run build"
+
+# API Proxy Configuration
+[[redirects]]
+  from = "/api/*"
+  to = "https://nchdashboard.onrender.com/api/:splat"
+  status = 200
+  force = true
