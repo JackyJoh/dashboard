@@ -2,11 +2,11 @@
   "rewrites": [
     { 
       "source": "/api/(.*)", 
-      "destination": "https://nchdashboard.onrender.com/$1" 
+      "destination": "https://nchdashboard.onrender.com/api/$1" 
     },
     { 
       "source": "/(.*)", 
       "destination": "/index.html" 
-    } 
+    }
   ]
 }
