@@ -52,10 +52,6 @@ const RiskScore: React.FC = () => {
     const percentage = Number.parseFloat(formData.percentage);
     const { date, insurance } = formData;
 
-    if (!percentage || isNaN(percentage) || percentage < 0 || percentage > 100) {
-      alert('Please enter a valid percentage between 0 and 100.');
-      return;
-    }
     if (!date) {
       alert('Please enter a valid date.');
       return;

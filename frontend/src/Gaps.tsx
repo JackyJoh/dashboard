@@ -13,7 +13,7 @@ interface ChartDataRecord {
 }
 
 const gapsFormFields: FormField[] = [
-  { label: 'Percent Closure Amount', name: 'percentage', type: 'text', placeholder: 'Enter the percentage' },
+  { label: 'Ratio of Closure Amount', name: 'percentage', type: 'text', placeholder: 'Closed / Total (eg. 100/150)' },
   { label: 'Date', name: 'date', type: 'date' },
   { label: 'Insurance', name: 'insurance', type: 'select', options: ['MyBlue', 'BCBS APO', 'Optum', 'WellMed'] },
 ];
@@ -49,13 +49,12 @@ const Gaps: React.FC = () => {
   };
 
   const handleFormSubmit = async (formData: Record<string, string>) => {
-    const percentage = Number.parseFloat(formData.percentage);
-    const { date, insurance } = formData;
+    const { percentage, date, insurance } = formData;
 
-    if (!percentage || isNaN(percentage) || percentage < 0 || percentage > 100) {
-      alert('Please enter a valid percentage between 0 and 100.');
-      return;
-    }
+    // if (!percentage || isNaN(percentage) || percentage < 0 || percentage > 100) {
+    //   alert('Please enter a valid percentage between 0 and 100.');
+    //   return;
+    // }
     if (!date) {
       alert('Please enter a valid date.');
       return;

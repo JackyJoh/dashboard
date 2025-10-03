@@ -68,10 +68,24 @@ app.get('/api/gaps/recent-data', authenticateToken, async (req, res) => {
 //Endpoint to post new data for gaps
 app.post('/api/gaps', authenticateToken, async (req, res) => {
     const { percentage, date, insurance } = req.body;
+    
+    // Parse numerator/denominator from percentage string (format: "numerator/denominator")
+    const parts = percentage.split('/');
+    if (parts.length !== 2) {
+        return res.status(400).json({ error: 'Percentage must be in format "numerator/denominator"' });
+    }
+    
+    const numerator = parseInt(parts[0].trim(), 10);
+    const denominator = parseInt(parts[1].trim(), 10);
+    
+    if (isNaN(numerator) || isNaN(denominator) || denominator === 0) {
+        return res.status(400).json({ error: 'Invalid numerator/denominator values' });
+    }
+    
     try {
         const { data, error } = await supabase
             .from('closure_percentage')
-            .insert([{ percentage, date, insurance }])
+            .insert([{ numerator, denominator, date, insurance }])
             .select();
 
         if (error) {
