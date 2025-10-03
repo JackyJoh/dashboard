@@ -175,6 +175,58 @@ app.get('/api/chart-data/earnings', authenticateToken, async (req, res) => {
     }
 });
 
+//post new outreach data
+app.post('/api/outreach', authenticateToken, async (req, res) => {
+    const { percentage, date, insurance } = req.body;
+    
+    // Parse numerator/denominator from percentage string (format: "numerator/denominator")
+    const parts = percentage.split('/');
+    if (parts.length !== 2) {
+        return res.status(400).json({ error: 'Percentage must be in format "numerator/denominator"' });
+    }
+    
+    const numerator = parseInt(parts[0].trim(), 10);
+    const denominator = parseInt(parts[1].trim(), 10);
+    
+    if (isNaN(numerator) || isNaN(denominator) || denominator === 0) {
+        return res.status(400).json({ error: 'Invalid numerator/denominator values' });
+    }
+    
+    try {
+        const { data, error } = await supabase
+            .from('pt_outreach')
+            .insert([{ numerator, denominator, date, insurance }])
+            .select();
+
+        if (error) {
+            console.error('Error inserting data:', error.message);
+            return res.status(500).json({ error: 'Failed to insert new record' });
+        }
+        res.status(201).json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
+//get outreach data
+app.get('/api/chart-data/outreach', authenticateToken, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('pt_outreach')
+            .select('date, percentage, insurance')
+            .order('date', { ascending: true });
+        if (error) {
+            console.error('Error fetching data from Supabase:', error.message);
+            return res.status(500).json({ error: 'Failed to fetch data' });
+        }
+        res.json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
 //Login endpoint
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;

@@ -20,10 +20,12 @@ const Dashboard: React.FC = () => {
   const [gapsChartData, setGapsChartData] = useState<ChartData[]>([]);
   const [riskChartData, setRiskChartData] = useState<ChartData[]>([]);
   const [earningsData, setEarningsData] = useState<EarningsChartData[]>([]);
+  const [outreachChartData, setOutreachChartData] = useState<ChartData[]>([]);
   
   const [gapsLoading, setGapsLoading] = useState(true);
   const [earningsLoading, setEarningsLoading] = useState(true);
   const [riskLoading, setRiskLoading] = useState(true);
+  const [outreachLoading, setOutreachLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -32,22 +34,26 @@ const Dashboard: React.FC = () => {
       const gapsPromise = fetchWithAuth('/api/chart-data', {}, navigate);
       const riskPromise = fetchWithAuth('/api/chart-data/risk-score', {}, navigate);
       const earningsPromise = fetchWithAuth('/api/chart-data/earnings', {}, navigate);
+      const outreachPromise = fetchWithAuth('/api/chart-data/outreach', {}, navigate);
 
-      const [gapsResponse, riskResponse, earningsResponse] = await Promise.all([
+      const [gapsResponse, riskResponse, earningsResponse, outreachResponse] = await Promise.all([
         gapsPromise,
         riskPromise,
         earningsPromise,
+        outreachPromise,
       ]);
 
-      const [gapsData, riskData, earningsData] = await Promise.all([
+      const [gapsData, riskData, earningsData, outreachData] = await Promise.all([
         gapsResponse.json(),
         riskResponse.json(),
         earningsResponse.json(),
+        outreachResponse.json(),
       ]);
 
       setGapsChartData(gapsData);
       setRiskChartData(riskData);
       setEarningsData(earningsData);
+      setOutreachChartData(outreachData);
     } catch (e) {
       console.error('Failed to fetch dashboard data:', e);
       setError('Failed to load dashboard data.');
@@ -55,6 +61,7 @@ const Dashboard: React.FC = () => {
       setGapsLoading(false);
       setRiskLoading(false);
       setEarningsLoading(false);
+      setOutreachLoading(false);
     }
   };
 
@@ -62,7 +69,7 @@ const Dashboard: React.FC = () => {
     fetchAllDashboardData();
   }, [navigate]);
 
-   if (gapsLoading || riskLoading || earningsLoading) {
+   if (gapsLoading || riskLoading || earningsLoading || outreachLoading) {
   //if (true) {
     return (
       <Layout showHeader={true}>
@@ -88,14 +95,15 @@ const Dashboard: React.FC = () => {
       <Grid>
         <div className="card-white">
           <div style={{ width: '100%', height: '100%' }}>
-            <h4>Care Gap Closure Over Time</h4>
+            <h4>Insurance Care Gap Closure Over Time</h4>
             <Chart data={gapsChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
           </div>
         </div>
-        <div className="card-green">
-          <p className="text-xl font-semibold text-green-800">
-            <strong>Risk Score</strong>
-          </p>
+        <div className="card-white">
+          <div style={{ width: '100%', height: '100%' }}>
+            <h4>Patient Outreach Over Time</h4>
+            <Chart data={outreachChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+          </div>
         </div>
         <div className="card-white">
           <div style={{ width: '100%', height: '100%' }}>

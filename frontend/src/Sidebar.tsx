@@ -7,8 +7,8 @@ const Sidebar: React.FC = () => {
     <div id="sidebar" className="sidebar">
       <ul>
         <li><Link to="/" className="sidebar-link">Dashboard</Link></li>
-        <li><Link to="/gaps" className="sidebar-link">Care Gap Closure</Link></li>
-        <li><Link to="/entry" className="sidebar-link">Patient Access Goals</Link></li>
+        <li><Link to="/gaps" className="sidebar-link">Insurance Gaps Closure</Link></li>
+        <li><Link to="/outreach" className="sidebar-link">Patient Outreach</Link></li>
         <li><Link to="/risk" className="sidebar-link">Risk Score</Link></li>
         <li><Link to="/other" className="sidebar-link">Other</Link></li>
       </ul>

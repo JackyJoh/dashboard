@@ -34,6 +34,13 @@ const Settings: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
+    // Show confirmation dialog
+    const confirmed = window.confirm('Are you sure you want to delete this record? This action cannot be undone.');
+    
+    if (!confirmed) {
+      return; // User cancelled, don't delete
+    }
+
     try {
       await fetchWithAuth(`/api/table-data/${selectedTable}/${id}`, { method: 'DELETE' }, navigate);
       await fetchTableData();
@@ -79,6 +86,7 @@ const Settings: React.FC = () => {
           >
             <option value="closure_percentage">Care Gap Closure Data</option>
             <option value="risk_closure">Risk Closure Data</option>
+            <option value="pt_outreach">Patient Outreach Data</option>
             <option value="closure_earnings">Closure Earnings Data</option>
           </select>
         </div>

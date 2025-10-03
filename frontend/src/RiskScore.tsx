@@ -93,7 +93,7 @@ const RiskScore: React.FC = () => {
 
   if (loading) {
     return (
-      <Layout showHeader={true}>
+      <Layout showHeader={false}>
         <div className="loading-box">
           <p className="loading-text">Loading...</p>
         </div>

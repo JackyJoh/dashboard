@@ -8,6 +8,7 @@ import Login from './Login';
 import { useBodyClass } from './useBodyClass';
 import Settings from './Settings';
 import Dashboard from './Dashboard';
+import Outreach from './Outreach';
 
 
 
@@ -56,9 +57,12 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Dashboard />} />
+      <Route path="/login" element={<Login onLogin={handleLogin} />} />
       <Route path="/gaps" element={<Gaps />} />
       <Route path="/risk" element={<RiskScore />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="*" element={<Dashboard />} />
+      <Route path="/outreach" element={<Outreach />} />
     </Routes>
   );
 }

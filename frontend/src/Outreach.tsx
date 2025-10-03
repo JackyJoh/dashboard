@@ -12,15 +12,15 @@ interface ChartDataRecord {
   insurance: string;
 }
 
-const gapsFormFields: FormField[] = [
-  { label: 'Ratio of Closure Amount', name: 'percentage', type: 'text', placeholder: 'Closed / Total (eg. 100/150)' },
+const outreachFormFields: FormField[] = [
+  { label: 'Outreach Rate', name: 'percentage', type: 'text', placeholder: 'Patients Outreached / Total (eg. 85/120)' },
   { label: 'Date', name: 'date', type: 'date' },
   { label: 'Insurance', name: 'insurance', type: 'select', options: ['MyBlue', 'BCBS APO', 'Optum', 'WellMed'] },
 ];
 
-const Gaps: React.FC = () => {
+const Outreach: React.FC = () => {
   const [chartData, setChartData] = useState<ChartDataRecord[]>([]);
-  const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
+//   const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
@@ -28,30 +28,29 @@ const Gaps: React.FC = () => {
 
   const fetchChartData = async () => {
     try {
-      const response = await fetchWithAuth('/api/chart-data', {}, navigate);
+      const response = await fetchWithAuth('/api/chart-data/outreach', {}, navigate);
       const data = await response.json();
       setChartData(data);
       setLoading(false);
     } catch (error) {
-      console.error('Failed to fetch chart data:', error);
-      setError('Failed to load chart data.');
+      console.error('Failed to fetch outreach chart data:', error);
+      setError('Failed to load outreach chart data.');
     }
-    try {
-      const response = await fetchWithAuth('/api/gaps/recent-data', {}, navigate);
-      const data = await response.json();
-      setRecentData(data);
-    } catch (error) {
-      console.error('Failed to fetch recent data:', error);
-      setError('Failed to load recent data.');
-    }
+    // try {
+    //   const response = await fetchWithAuth('/api/outreach/recent-data', {}, navigate);
+    //   const data = await response.json();
+    //   setRecentData(data);
+    // } catch (error) {
+    //   console.error('Failed to fetch recent outreach data:', error);
+    //   setError('Failed to load recent outreach data.');
+    // }
     setLoading(false);
-
   };
 
   const handleFormSubmit = async (formData: Record<string, string>) => {
     const { percentage, date, insurance } = formData;
 
-     if (!percentage) {
+    if (!percentage) {
       alert('Please enter a valid percentage.');
       return;
     }
@@ -70,6 +69,7 @@ const Gaps: React.FC = () => {
       alert('Please enter valid numbers for numerator and denominator (denominator must be greater than 0)');
       return;
     }
+
     if (!date) {
       alert('Please enter a valid date.');
       return;
@@ -80,7 +80,7 @@ const Gaps: React.FC = () => {
     }
 
     try {
-      const response = await fetchWithAuth('/api/gaps', {
+      const response = await fetchWithAuth('/api/outreach', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,14 +88,21 @@ const Gaps: React.FC = () => {
         body: JSON.stringify({ percentage, date, insurance }),
       }, navigate);
       
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        alert(`Error: ${errorData.error || 'Failed to submit data'}`);
+        return;
+      }
+      
       const newEntry = await response.json();
-      console.log('New entry added successfully:', newEntry);
+      console.log('New outreach entry added successfully:', newEntry);
 
       setResetKey(prevKey => prevKey + 1);
       await fetchChartData();
       
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error('Outreach submission error:', error);
     }
   };
 
@@ -123,17 +130,17 @@ const Gaps: React.FC = () => {
         <div className="gaps-top-row">
           <div className="gaps-top-row-item">
             <DataEntryForm
-              title="Add New Care Gap Data Point"
-              fields={gapsFormFields}
+              title="Add New Outreach Data Point"
+              fields={outreachFormFields}
               onSubmit={handleFormSubmit}
               resetKey={resetKey}
             />
           </div>
           <div className="gaps-top-row-item">
             <div className="gaps-stats-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '100%' }}>
-              <p className="gaps-stats-text" style={{ margin: '0.25rem' }}>Most Recent Data</p>
+              <p className="gaps-stats-text" style={{ margin: '0.25rem' }}>Most Recent Outreach Data</p>
               <div style={{ width: '100%', maxWidth: 600, height: 300, minHeight: 200 }}>
-                <Chart data={recentData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='bar'/>
+                {/* <Chart data={recentData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='bar'/> */}
               </div>
             </div>
           </div>
@@ -146,4 +153,4 @@ const Gaps: React.FC = () => {
   );
 };
 
-export default Gaps;
+export default Outreach;
