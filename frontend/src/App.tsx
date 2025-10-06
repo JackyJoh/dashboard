@@ -9,6 +9,7 @@ import { useBodyClass } from './useBodyClass';
 import Settings from './Settings';
 import Dashboard from './Dashboard';
 import Outreach from './Outreach';
+import PriorityGaps from './PriorityGaps';
 
 
 
@@ -59,6 +60,7 @@ function App() {
       <Route path="/" element={<Dashboard />} />
       <Route path="/login" element={<Login onLogin={handleLogin} />} />
       <Route path="/gaps" element={<Gaps />} />
+      <Route path="/priority" element={<PriorityGaps />} />
       <Route path="/risk" element={<RiskScore />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="*" element={<Dashboard />} />
