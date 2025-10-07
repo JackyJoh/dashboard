@@ -1,15 +1,20 @@
 const express = require('express');
 const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
-const app = express();
+const path = require('path');
+const cors = require('cors');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Create express app   
+const app = express();
+
 // Middleware to parse JSON request bodies
 app.use(express.json());
+
 
 const PORT = process.env.PORT || 5000;
 

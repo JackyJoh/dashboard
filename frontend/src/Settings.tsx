@@ -92,6 +92,8 @@ const Settings: React.FC = () => {
         </div>
       </div>
     
+      
+
       <div className="settings-card table-data-card">
         <h2 className="settings-card-title">
           Table Data: {selectedTable.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
