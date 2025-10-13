@@ -123,7 +123,7 @@ const Gaps: React.FC = () => {
         <div className="gaps-top-row">
           <div className="gaps-top-row-item">
             <DataEntryForm
-              title="Add New Care Gap Data Point"
+              title="Add Insurance Gap Closure Data Point"
               fields={gapsFormFields}
               onSubmit={handleFormSubmit}
               resetKey={resetKey}
@@ -131,7 +131,7 @@ const Gaps: React.FC = () => {
           </div>
           <div className="gaps-top-row-item">
             <div className="gaps-stats-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '100%' }}>
-              <p className="gaps-stats-text" style={{ margin: '0.25rem' }}>Most Recent Data</p>
+              <p className="gaps-stats-text" style={{ margin: '0.25rem' }}>Most Recent Insurance Closure Data</p>
               <div style={{ width: '100%', maxWidth: 600, height: 300, minHeight: 200 }}>
                 <Chart data={recentData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='bar'/>
               </div>

@@ -87,6 +87,7 @@ const Settings: React.FC = () => {
             <option value="closure_percentage">Care Gap Closure Data</option>
             <option value="risk_closure">Risk Closure Data</option>
             <option value="pt_outreach">Patient Outreach Data</option>
+            <option value="priority_gaps">Priority Gaps Data</option>
             <option value="closure_earnings">Closure Earnings Data</option>
           </select>
         </div>

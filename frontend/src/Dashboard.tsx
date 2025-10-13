@@ -73,8 +73,8 @@ const Dashboard: React.FC = () => {
   //if (true) {
     return (
       <Layout showHeader={true}>
-      <div className="loading-container">
-        <div className="loading-box">
+      <div className="loading-container-dash">
+        <div className="loading-box-dash">
           <p className="loading-text">Loading...</p>
         </div>
       </div>

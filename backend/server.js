@@ -3,6 +3,9 @@ const { createClient } = require('@supabase/supabase-js');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const cors = require('cors');
+const multer = require('multer');
+const { spawn } = require('child_process'); 
+const fs = require('fs'); // Node.js built-in file system module
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -11,12 +14,33 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Create express app   
 const app = express();
+const upload = multer({ dest: 'uploads/' });
 
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
 
 const PORT = process.env.PORT || 5000;
+
+// Setup file upload directory
+const uploadPath = process.env.NODE_ENV === 'production' ? '/tmp/' : 'uploads/';
+if (process.env.NODE_ENV !== 'production' && !fs.existsSync(uploadPath)) {
+    fs.mkdirSync(uploadPath);
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+        // Use a unique name to prevent conflicts
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + '.xlsx');
+    }
+});
+
+// Configure multer to use the custom storage settings
+const uploadHandler = multer({ storage: storage });
 
 // Middleware to authenticate JWT
 function authenticateToken(req, res, next) {
@@ -32,11 +56,111 @@ function authenticateToken(req, res, next) {
     });
 }
 
-//Endpoint to get chart data for gaps
-app.get('/api/chart-data', authenticateToken, async (req, res) => {
+
+// Endpoint to handle file upload and processing
+app.post('/api/priority-gaps', authenticateToken, uploadHandler.single('excelFile'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    if (!req.body.date) {
+        return res.status(400).json({ error: 'No date provided' });
+    }
+    const filePath = req.file.path;
+    const date = req.body.date; // Get date from the request body
+    const pythonProcess = spawn('python', ['excel_processor.py', filePath, date]);
+
+    let pythonOutput = '';
+    let pythonError = '';
+
+    pythonProcess.stdout.on('data', (data) => {
+        pythonOutput += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+        pythonError += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+        // Clean up the temporary file after processing
+        fs.unlink(filePath, (err) => {
+            if (err) console.error('Error cleaning up file:', err);
+        });
+        
+        if (code !== 0) {
+            console.error('Python script failed:', pythonError);
+            return res.status(500).json({ 
+                error: 'Data processing failed in Python', 
+                details: pythonError 
+            });
+        }
+        
+        // 4. Send the processed JSON data back
+        try {
+            res.json(JSON.parse(pythonOutput));
+        } catch (e) {
+            console.error('Failed to parse Python JSON:', e);
+            res.status(500).json({ error: 'Invalid JSON response from processor.' });
+        }
+    });
+});
+
+app.post('/api/priority-gaps/processed', authenticateToken, async (req, res) => {
+    // Expecting { date: string, metrics: { diabetes, blood_pressure, breast_cancer, colorectal_cancer } }
+    const { date, metrics } = req.body;
+
+    if (!date || !metrics) {
+        return res.status(400).json({ error: 'Invalid data. Date and metrics are required.' });
+    }
+
+    try {
+        // Map incoming keys to the database column names. The DB uses `colo_cancer` for colorectal column.
+        const insertObj = {
+            date: date,
+            diabetes: metrics.diabetes ?? null,
+            blood_pressure: metrics.blood_pressure ?? null,
+            breast_cancer: metrics.breast_cancer ?? null,
+            colo_cancer: metrics.colorectal_cancer ?? null,
+        };
+
+        const { data, error } = await supabase
+            .from('priority_gaps')
+            .insert([insertObj])
+            .select();
+
+        if (error) {
+            console.error('Error inserting processed data:', error.message);
+            return res.status(500).json({ error: 'Failed to save processed data.' });
+        }
+        // Return the inserted row(s) to the client
+        res.status(201).json(data);
+    } catch (e) {
+        console.error('Server error on processed data insert:', e);
+        res.status(500).json({ error: 'An unexpected error occurred.' });
+    }
+});
+
+app.get('/api/chart-data/priority-gaps', authenticateToken, async (req, res) => {
     try {
         const { data, error } = await supabase
-            .from('closure_percentage')
+            .from('priority_gaps')
+            .select('date, diabetes, blood_pressure, breast_cancer, colo_cancer')
+            .order('date', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching data from Supabase:', error.message);
+            return res.status(500).json({ error: 'Failed to fetch data' });
+        }
+        res.json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
+app.get('/api/chart-data/risk-score', authenticateToken, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('risk_closure')
             .select('date, percentage, insurance')
             .order('date', { ascending: true });
 
@@ -69,6 +193,25 @@ app.get('/api/gaps/recent-data', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'An unexpected error occurred' });
     }
 });
+
+app.get('/api/chart-data', authenticateToken, async (req, res) => {
+    try {
+        const { data, error } = await supabase
+        .from('closure_percentage')
+        .select('date, percentage, insurance')
+        .order('date', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching data from Supabase:', error.message);
+            return res.status(500).json({ error: 'Failed to fetch data' });
+        }
+        res.json(data);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
 
 //Endpoint to post new data for gaps
 app.post('/api/gaps', authenticateToken, async (req, res) => {

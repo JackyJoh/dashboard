@@ -14,10 +14,23 @@ html, body {
     height: 100%;
 }
 
+:root {
+  --bg: #f3f4f6;
+  --text: #111827;
+  --white: #ffffff;
+  --muted: #e5e7eb;
+  --hover: #d1d5db;
+  --primary: #4f46e5;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --elev-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --radius: 0.5rem;
+  --radius-lg: 1rem;
+}
+
 /* Main layout container */
 .main-container {
-    background-color: #f3f4f6;
-    color: #111827;
+  background-color: var(--bg);
+  color: var(--text);
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -25,23 +38,23 @@ html, body {
 
 /* Header styles */
 .app-header {
-    background-color: #000;
-    color: #fff;
-    padding: 0.5rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    height: 4rem;
-    width: 100vw;
+  background-color: #000;
+  color: var(--white);
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--card-shadow);
+  height: 4rem;
+  width: 100vw;
 }
 .header-button {
-    padding: 0.5rem;
-    border-radius: 0.375rem;
-    background-color: #4f46e5;
-    color: #fff;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    border: none;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  background-color: var(--primary);
+  color: var(--white);
+  box-shadow: var(--card-shadow);
+  border: none;
 }
 .header-button svg {
     width: 1.5rem;
@@ -62,12 +75,12 @@ html, body {
 
 /* Sidebar styles */
 .sidebar {
-    background-color: #e5e7eb;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    flex-shrink: 0;
-    transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, padding 0.3s ease-in-out;
+  background-color: var(--muted);
+  box-shadow: var(--elev-shadow);
+  border-radius: var(--radius);
+  padding: 1rem;
+  flex-shrink: 0;
+  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, padding 0.3s ease-in-out;
 }
 .sidebar ul {
     list-style-type: none;
@@ -77,18 +90,18 @@ html, body {
     gap: 0.5rem;
 }
 .sidebar ul li a {
-    display: block;
-    padding: 0.5rem;
-    border-radius: 0.375rem;
-    text-decoration: none;
-    color: #111827;
-    transition: background-color 0.3s ease-in-out;
+  display: block;
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  color: var(--text);
+  transition: background-color 0.3s ease-in-out;
 }
 .sidebar ul li a:hover {
-    background-color: #d1d5db;
+  background-color: var(--hover);
 }
 .sidebar ul li a.sidebar-link-active {
-    background-color: #d1d5db;
+  background-color: var(--hover);
 }
 
 /* Main content area */
@@ -109,15 +122,15 @@ html, body {
     grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 .card-white, .card-green, .card-purple {
-    background-color: #fff;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    overflow-y: auto;
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  overflow-y: auto;
 }
 .card-green {
     background-color: #dcfce7;
@@ -181,12 +194,12 @@ html, body {
     height: 100%;
 }
 .data-entry-form {
-    background-color: #fff;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    border-radius: 0.5rem;
-    padding: 1rem;
-    flex-grow: 0;
-    height: 100%; /* Ensure form fills its container height */
+  background-color: var(--white);
+  box-shadow: var(--elev-shadow);
+  border-radius: var(--radius);
+  padding: 1rem;
+  flex-grow: 0;
+  height: 100%; /* Ensure form fills its container height */
 }
 /* New class for the form fields container */
 .data-entry-form-fields {
@@ -240,15 +253,15 @@ html, body {
     box-shadow: 0 0 0 2px #fff, 0 0 0 4px #6366f1;
 }
 .gaps-stats-container {
-    background-color: white;
-    padding: 0.25rem;
-    border-radius: 0.25rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
+  background-color: var(--white);
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  box-shadow: var(--card-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 .gaps-stats-text {
     font-size: 1.125rem;
@@ -256,12 +269,12 @@ html, body {
     color: #2b6cb0;
 }
 .gaps-chart-full-width-container {
-    background-color: #fff;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    flex-grow: 1;
-    height: 100%;
+  background-color: var(--white);
+  padding: 1rem;
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  flex-grow: 1;
+  height: 100%;
 }
 
 /* Mobile specific styles for sidebar functionality */
@@ -336,7 +349,21 @@ html, body {
   background-color: #d1d5db;
 }
 #sidebar ul li a.sidebar-link-active {
-  background-color: #d1d5db;
+  background-color: #c0c5cb;
+}
+
+/* Active sidebar link: solid darker box (no outline) */
+.sidebar-link.sidebar-link-active {
+  background-color: #9ca3af; /* solid darker gray */
+  color: #ffffff;
+  border-radius: 0.375rem;
+  box-shadow: none;
+}
+
+/* Remove default focus ring for sidebar links to avoid circular outline */
+#sidebar ul li a:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 /* Sidebar Footer */
@@ -678,7 +705,7 @@ html, body {
   justify-content: center;
   align-items: center;
   padding: 3rem 4rem;
-  min-height: 90vh;
+  min-height: 97.1vh;
   width: 100%;
 }
 .app-loading-box {
@@ -700,6 +727,18 @@ html, body {
 }
 .app-loading-text {
   font-size: 12rem;
+}
+
+.loading-box-dash {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 4rem;
+  min-height: 90vh;
+  width: 100%;
 }
 
 @keyframes gradient-shift {

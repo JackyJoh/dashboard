@@ -1,17 +1,29 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './styles.css';
 
 const Sidebar: React.FC = () => {
+  const location = useLocation();
+  const pathname = location.pathname || '/';
+
+  const makeLink = (to: string, label: string) => {
+    const isActive = pathname === to;
+    return (
+      <li>
+        <Link to={to} className={`sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}>{label}</Link>
+      </li>
+    );
+  };
+
   return (
     <div id="sidebar" className="sidebar">
       <ul>
-        <li><Link to="/" className="sidebar-link">Dashboard</Link></li>
-        <li><Link to="/gaps" className="sidebar-link">Insurance Closures</Link></li>
-        <li><Link to="/priority" className="sidebar-link">Metric Closures</Link></li>
-        <li><Link to="/outreach" className="sidebar-link">Patient Outreach</Link></li>
-        <li><Link to="/risk" className="sidebar-link">Risk Score</Link></li>
-        <li><Link to="/other" className="sidebar-link">Other</Link></li>
+        {makeLink('/', 'Dashboard')}
+        {makeLink('/gaps', 'Insurance Closures')}
+        {makeLink('/priority', 'Metric Closures')}
+        {makeLink('/outreach', 'Patient Outreach')}
+        {makeLink('/risk', 'Risk Score')}
+        {makeLink('/other', 'Other')}
       </ul>
       <div className="sidebar-footer">
         <div className="sidebar-footer-links">
