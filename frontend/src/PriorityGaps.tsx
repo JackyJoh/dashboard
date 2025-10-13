@@ -227,7 +227,7 @@ const PriorityGaps: React.FC = () => {
                   {excelLoading ? (
                     <div style={{ textAlign: 'center', fontSize: '2rem' }}>Processing Excel file...</div>
                   ) : (
-                    <Chart data={memoRecentLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line' />
+                    <Chart data={memoRecentLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='bar' />
                   )}
                 </div>
             </div>
