@@ -11,6 +11,7 @@ interface ChartProps {
   yColumn?: string;
   groupColumn?: string;
   maxY?: number;
+  id?: string;
 }
 
 // Define a set of up to 6 distinct colors
@@ -23,7 +24,7 @@ const COLORS = [
   'rgba(255, 159, 64, 1)'  // Orange
 ];
 
-const Chart: React.FC<ChartProps> = ({ data, graphType, xColumn, yColumn, groupColumn, maxY }) => {
+const Chart: React.FC<ChartProps> = ({ data, graphType, xColumn, yColumn, groupColumn, maxY, id }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstanceRef = useRef<ChartJS | null>(null);
 
@@ -138,7 +139,7 @@ const Chart: React.FC<ChartProps> = ({ data, graphType, xColumn, yColumn, groupC
     });
   }, [data, graphType, xColumn, yColumn, groupColumn, maxY]);
 
-  return <canvas ref={canvasRef} />;
+  return <canvas id={id} ref={canvasRef} />;
 };
 
 export default Chart;

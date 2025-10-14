@@ -3,6 +3,7 @@ import Layout from './Layout';
 import Chart from './Chart';
 import { fetchWithAuth } from './api'; // Import the new utility
 import { useNavigate } from 'react-router-dom';
+import { CSVLink } from 'react-csv';
 
 interface ChartDataRecord {
   date: string;
@@ -109,11 +110,12 @@ const PriorityGaps: React.FC = () => {
         console.error('Submit flow failed:', e);
         setError(e.message || 'Submission failed');
       } finally {
+        // Always clear excelLoading (processing state) when the submit flow finishes
+        setExcelLoading(false);
         setLoading(false);
       }
     })();
-    // console.log('Submitting local file:', selectedFile.name, 'with date:', selectedDate);
-    // alert(`File "${selectedFile.name}" and date "${selectedDate}" are ready for submission.`);
+    
   };
 
   // Convert wide-format rows (date + metric columns) into long format:
@@ -234,12 +236,18 @@ const PriorityGaps: React.FC = () => {
           </div>
         </div>
         <div className="gaps-chart-full-width-container">
-          <div style={{ width: '100%', height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {excelLoading ? (
-              <div style={{ textAlign: 'center', color: '#374151', fontSize: '5rem' }}>Processing Excel file...</div>
-            ) : (
-              <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line'/>
-            )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+            <CSVLink 
+              data={chartData}
+              filename={"priority_metrics_data.csv"}
+              className="small-btn"
+              aria-label="Download CSV"
+            >
+              <img src="/export.png" alt="Export" />
+            </CSVLink>
+          </div>
+          <div style={{ width: '100%', height: 400, minHeight: 300 }}>
+            <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line' />
           </div>
         </div>
       </div>

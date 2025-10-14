@@ -113,7 +113,7 @@ app.post('/api/priority-gaps/processed', authenticateToken, async (req, res) => 
     }
 
     try {
-        // Map incoming keys to the database column names. The DB uses `colo_cancer` for colorectal column.
+        // Map incoming keys to the database column names.
         const insertObj = {
             date: date,
             diabetes: metrics.diabetes ?? null,

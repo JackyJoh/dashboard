@@ -5,6 +5,7 @@ import type { FormField } from './DataEntryForm';
 import Chart from './Chart';
 import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from './api';
+import { CSVLink } from 'react-csv';
 
 interface ChartDataRecord {
   date: string;
@@ -146,7 +147,19 @@ const Outreach: React.FC = () => {
           </div>
         </div>
         <div className="gaps-chart-full-width-container">
-          <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line'/>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+            <CSVLink 
+              data={chartData}
+              filename={"patient_outreach_data.csv"}
+              className="small-btn"
+              aria-label="Download CSV"
+            >
+              <img src="/export.png" alt="Export" />
+            </CSVLink>
+          </div>
+          <div style={{ width: '100%', height: 400, minHeight: 300 }}>
+            <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line'/>
+          </div>
         </div>
       </div>
     </Layout>
