@@ -107,7 +107,7 @@ const Layout: React.FC<LayoutProps> = ({ children, showHeader = true }) => {
           <p className="header-title">NCH Dashboard</p>
           <div>
             <button id="export-button" className="header-button" onClick={generatePDF} aria-label="Export PDF">
-              Export
+              Export to PDF
             </button>
           </div>
         </header>
