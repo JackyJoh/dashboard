@@ -26,6 +26,7 @@ const Gaps: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const navigate = useNavigate();
 
   const fetchChartData = async () => {
@@ -141,7 +142,14 @@ const Gaps: React.FC = () => {
           </div>
         </div>
         <div className="gaps-chart-full-width-container">
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px' }}>
+            <button 
+              className="small-btn"
+              aria-label="Fullscreen"
+              onClick={() => setIsFullscreen(true)}
+            >
+              <img src="/fullscreen.png" alt="Fullscreen" style={{ transform: 'scale(1.7)' }} />
+            </button>
             <CSVLink 
               data={chartData}
               filename={"care_gap_closure_data.csv"}
@@ -156,6 +164,60 @@ const Gaps: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Fullscreen Modal */}
+      {isFullscreen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+          }}
+          onClick={() => setIsFullscreen(false)}
+        >
+          <div
+            style={{
+              width: '95%',
+              height: '90%',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '2rem',
+              position: 'relative',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsFullscreen(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'transparent',
+                border: 'none',
+                fontSize: '2rem',
+                cursor: 'pointer',
+                color: '#666',
+              }}
+            >
+              ✕
+            </button>
+            <h2 style={{ marginTop: 0, marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.75rem', color: '#333' }}>
+              Insurance Gap Closures over Time
+            </h2>
+            <div style={{ width: '100%', height: 'calc(100% - 4rem)' }}>
+              <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line'/>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };

@@ -23,6 +23,7 @@ const PriorityGaps: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [excelLoading, setExcelLoading] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -72,7 +73,7 @@ const PriorityGaps: React.FC = () => {
 
     (async () => {
       try {
-        //setLoading(true);
+        setLoading(true);
         setExcelLoading(true);
         setError(null);
 
@@ -167,21 +168,10 @@ const PriorityGaps: React.FC = () => {
           <div className="gaps-top-row-item">
             <div className="data-entry-form">
               <h4>Upload Care Gap Data</h4>
-
-              {/* --- Option 1: OneDrive (Placeholder) --- */}
-              <div style={{ marginBottom: '1rem', paddingBottom: '1.2rem', borderBottom: '1px solid #e2e8f0' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#4a5568' }}>
-                  Option 1: Connect to OneDrive
-                </label>
-                <button className="form-button" disabled>
-                  Connect & Browse OneDrive
-                </button>
-              </div>
-
               {/* --- Option 2: Local File Upload --- */}
-              <div style={{ paddingTop: '0rem' }}>
+              <div style={{ paddingTop: '4rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#4a5568' }}>
-                  Option 2: Upload from your computer
+                  Upload a file from your computer
                 </label>
                 
                 <div style={{ marginBottom: '1rem' }}>
@@ -227,7 +217,7 @@ const PriorityGaps: React.FC = () => {
               <p className="gaps-stats-text" style={{ margin: '0.25rem' }}>Most Recent Metric Gap Data</p>
                 <div style={{ width: '100%', maxWidth: 600, height: 300, minHeight: 200, borderRadius: '8px', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {excelLoading ? (
-                    <div style={{ textAlign: 'center', fontSize: '2rem' }}>Processing Excel file...</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '2rem' }}>Processing Excel file...</div>
                   ) : (
                     <Chart data={memoRecentLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='bar' />
                   )}
@@ -236,7 +226,14 @@ const PriorityGaps: React.FC = () => {
           </div>
         </div>
         <div className="gaps-chart-full-width-container">
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px' }}>
+            <button 
+              className="small-btn"
+              aria-label="Fullscreen"
+              onClick={() => setIsFullscreen(true)}
+            >
+              <img src="/fullscreen.png" alt="Fullscreen" style={{ transform: 'scale(1.7)' }} />
+            </button>
             <CSVLink 
               data={chartData}
               filename={"priority_metrics_data.csv"}
@@ -247,10 +244,68 @@ const PriorityGaps: React.FC = () => {
             </CSVLink>
           </div>
           <div style={{ width: '100%', height: 400, minHeight: 300 }}>
-            <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line' />
+            {excelLoading ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '4rem' }}>Processing Excel file...</div>
+            ) : (
+              <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line' />
+            )}
           </div>
         </div>
       </div>
+
+      {/* Fullscreen Modal */}
+      {isFullscreen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '2rem',
+          }}
+          onClick={() => setIsFullscreen(false)}
+        >
+          <div
+            style={{
+              width: '95%',
+              height: '90%',
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '2rem',
+              position: 'relative',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setIsFullscreen(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'transparent',
+                border: 'none',
+                fontSize: '2rem',
+                cursor: 'pointer',
+                color: '#666',
+              }}
+            >
+              ✕
+            </button>
+            <h2 style={{ marginTop: 0, marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.75rem', color: '#333' }}>
+              Priority Metric Closures over Time
+            </h2>
+            <div style={{ width: '100%', height: 'calc(100% - 4rem)' }}>
+              <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line' />
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
