@@ -20,6 +20,8 @@ const gapsFormFields: FormField[] = [
   { label: 'Insurance', name: 'insurance', type: 'select', options: ['MyBlue', 'BCBS APO', 'Optum', 'WellMed'] },
 ];
 
+const graphsTypeOptions = ['line', 'bar', 'pie'] as const;
+
 const Gaps: React.FC = () => {
   const [chartData, setChartData] = useState<ChartDataRecord[]>([]);
   const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
@@ -27,6 +29,7 @@ const Gaps: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [graphType, setGraphType] = useState<typeof graphsTypeOptions[number]>('line');
   const navigate = useNavigate();
 
   const fetchChartData = async () => {
@@ -50,6 +53,15 @@ const Gaps: React.FC = () => {
     setLoading(false);
 
   };
+
+  //rotate graph type
+  const rotateGraphType = () => {
+    setGraphType((prevType) => {
+      const currentIndex = graphsTypeOptions.indexOf(prevType);
+      const nextIndex = (currentIndex + 1) % graphsTypeOptions.length;
+      return graphsTypeOptions[nextIndex];
+    });
+  }
 
   const handleFormSubmit = async (formData: Record<string, string>) => {
     const { percentage, date, insurance } = formData;
@@ -158,9 +170,16 @@ const Gaps: React.FC = () => {
             >
               <img src="/export.png" alt="Export" />
             </CSVLink>
+            <button 
+              className="small-btn"
+              aria-label="Change graph type"
+              onClick={rotateGraphType}
+            >
+              <img src="/73450.png" alt="Change graph type" />
+            </button>
           </div>
           <div style={{ width: '100%', height: 400, minHeight: 300 }}>
-            <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line'/>
+            <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
           </div>
         </div>
       </div>
@@ -213,7 +232,7 @@ const Gaps: React.FC = () => {
               Insurance Gap Closures over Time
             </h2>
             <div style={{ width: '100%', height: 'calc(100% - 4rem)' }}>
-              <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line'/>
+              <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
             </div>
           </div>
         </div>

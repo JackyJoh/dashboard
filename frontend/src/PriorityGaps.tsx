@@ -13,6 +13,7 @@ interface ChartDataRecord {
   colo_cancer: number;
 }
 
+const graphsTypeOptions = ['line', 'bar', 'pie'] as const;
 
 const PriorityGaps: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const PriorityGaps: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [excelLoading, setExcelLoading] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [graphType, setGraphType] = useState<typeof graphsTypeOptions[number]>('line');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -56,6 +58,15 @@ const PriorityGaps: React.FC = () => {
         setLoading(false);
       }
     };
+
+  //rotate graph type
+  const rotateGraphType = () => {
+    setGraphType((prevType) => {
+      const currentIndex = graphsTypeOptions.indexOf(prevType);
+      const nextIndex = (currentIndex + 1) % graphsTypeOptions.length;
+      return graphsTypeOptions[nextIndex];
+    });
+  }
 
   const handleSubmit = () => {
     if (!selectedFile) {
@@ -242,12 +253,19 @@ const PriorityGaps: React.FC = () => {
             >
               <img src="/export.png" alt="Export" />
             </CSVLink>
+            <button 
+              className="small-btn"
+              aria-label="Change graph type"
+              onClick={rotateGraphType}
+            >
+              <img src="/73450.png" alt="Change graph type" />
+            </button>
           </div>
           <div style={{ width: '100%', height: 400, minHeight: 300 }}>
             {excelLoading ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '4rem' }}>Processing Excel file...</div>
             ) : (
-              <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line' />
+              <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType={graphType} />
             )}
           </div>
         </div>
@@ -301,7 +319,7 @@ const PriorityGaps: React.FC = () => {
               Priority Metric Closures over Time
             </h2>
             <div style={{ width: '100%', height: 'calc(100% - 4rem)' }}>
-              <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line' />
+              <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType={graphType} />
             </div>
           </div>
         </div>

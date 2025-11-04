@@ -117,19 +117,45 @@ const Chart: React.FC<ChartProps> = ({ data, graphType, xColumn, yColumn, groupC
       };
 
     } else if (graphType === 'pie' || graphType === 'donut') {
-      const pieData = data.map(item => item[yColumn!]);
-      const pieLabels = data.map(item => item[xColumn!]);
-      
-      // Use predefined colors for each segment, cycling if more than 6 segments
-      const backgroundColors = pieLabels.map((_, index) => COLORS[index % COLORS.length]);
-      
-      labels = pieLabels;
-      datasets = [{
-        label: yColumn,
-        data: pieData,
-        backgroundColor: backgroundColors,
-        hoverOffset: 4
-      }];
+      // For pie charts with groupColumn, aggregate by group (e.g., insurance)
+      if (groupColumn) {
+        // Group data and calculate average or sum per group
+        const groupedData = data.reduce((acc, record) => {
+          const groupKey = record[groupColumn];
+          if (!acc[groupKey]) {
+            acc[groupKey] = { sum: 0, count: 0 };
+          }
+          acc[groupKey].sum += record[yColumn!] || 0;
+          acc[groupKey].count += 1;
+          return acc;
+        }, {} as Record<string, { sum: number; count: number }>);
+
+        labels = Object.keys(groupedData);
+        const pieData = labels.map(key => groupedData[key].sum / groupedData[key].count);
+        const backgroundColors = labels.map((_, index) => COLORS[index % COLORS.length]);
+        
+        datasets = [{
+          label: yColumn,
+          data: pieData,
+          backgroundColor: backgroundColors,
+          hoverOffset: 4
+        }];
+      } else {
+        // Without groupColumn, show individual data points
+        const pieData = data.map(item => item[yColumn!]);
+        const pieLabels = data.map(item => item[xColumn!]);
+        
+        // Use predefined colors for each segment, cycling if more than 6 segments
+        const backgroundColors = pieLabels.map((_, index) => COLORS[index % COLORS.length]);
+        
+        labels = pieLabels;
+        datasets = [{
+          label: yColumn,
+          data: pieData,
+          backgroundColor: backgroundColors,
+          hoverOffset: 4
+        }];
+      }
     }
 
     chartInstanceRef.current = new ChartJS(ctx, {

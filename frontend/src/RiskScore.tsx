@@ -18,6 +18,9 @@ const gapsFormFields: FormField[] = [
   { label: 'Date', name: 'date', type: 'date' },
   { label: 'Insurance', name: 'insurance', type: 'select', options: ['MyBlue', 'BCBS APO', 'Optum', 'WellMed'] },
 ];
+
+const graphsTypeOptions = ['line', 'bar', 'pie'] as const;
+
 const RiskScore: React.FC = () => {
   const [chartData, setChartData] = useState<ChartDataRecord[]>([]);
   const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
@@ -26,6 +29,7 @@ const RiskScore: React.FC = () => {
   const [resetKey, setResetKey] = useState(0); // New state to control the form reset
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const navigate = useNavigate();
+  const [graphType, setGraphType] = useState<typeof graphsTypeOptions[number]>('line');
 
 
   //get risk score data
@@ -49,6 +53,15 @@ const RiskScore: React.FC = () => {
       setLoading(false);
   };
   };
+
+  //rotate graph type
+  const rotateGraphType = () => {
+    setGraphType((prevType) => {
+      const currentIndex = graphsTypeOptions.indexOf(prevType);
+      const nextIndex = (currentIndex + 1) % graphsTypeOptions.length;
+      return graphsTypeOptions[nextIndex];
+    });
+  }
 
   const handleFormSubmit = async (formData: Record<string, string>) => {
     const percentage = Number.parseFloat(formData.percentage);
@@ -143,9 +156,16 @@ const RiskScore: React.FC = () => {
             >
               <img src="/export.png" alt="Export" />
             </CSVLink>
+            <button 
+              className="small-btn"
+              aria-label="Third button"
+              onClick={rotateGraphType}
+            >
+              <img src="/73450.png" alt="Third button" />
+            </button>
           </div>
           <div style={{ width: '100%', height: 400, minHeight: 300 }}>
-            <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line'/>
+            <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
           </div>
         </div>
       </div>
@@ -198,7 +218,7 @@ const RiskScore: React.FC = () => {
               Risk Score Closures over Time
             </h2>
             <div style={{ width: '100%', height: 'calc(100% - 4rem)' }}>
-              <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line'/>
+              <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
             </div>
           </div>
         </div>
