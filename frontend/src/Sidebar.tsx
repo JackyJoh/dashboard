@@ -23,7 +23,7 @@ const Sidebar: React.FC = () => {
         {makeLink('/priority', 'Metric Closures')}
         {makeLink('/outreach', 'Patient Outreach')}
         {makeLink('/risk', 'Risk Score')}
-        {makeLink('/other', 'Other')}
+        {/* {makeLink('/other', 'Other')} */}
       </ul>
       <div className="sidebar-footer">
         <div className="sidebar-footer-links">
