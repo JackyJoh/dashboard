@@ -33,15 +33,16 @@ const Gaps: React.FC = () => {
   const navigate = useNavigate();
 
   const fetchChartData = async () => {
+    setLoading(true);
     try {
       const response = await fetchWithAuth('/api/chart-data', {}, navigate);
       const data = await response.json();
       setChartData(data);
-      setLoading(false);
     } catch (error) {
       console.error('Failed to fetch chart data:', error);
       setError('Failed to load chart data.');
     }
+    
     try {
       const response = await fetchWithAuth('/api/gaps/recent-data', {}, navigate);
       const data = await response.json();
@@ -49,9 +50,9 @@ const Gaps: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch recent data:', error);
       setError('Failed to load recent data.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-
   };
 
   //rotate graph type
@@ -116,6 +117,7 @@ const Gaps: React.FC = () => {
 
   useEffect(() => {
     fetchChartData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (loading) {

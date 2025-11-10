@@ -104,6 +104,7 @@ app.post('/api/priority-gaps', authenticateToken, uploadHandler.single('excelFil
     });
 });
 
+// second route for processed data
 app.post('/api/priority-gaps/processed', authenticateToken, async (req, res) => {
     // Expecting { date: string, metrics: { diabetes, blood_pressure, breast_cancer, colorectal_cancer } }
     const { date, metrics } = req.body;
@@ -139,6 +140,7 @@ app.post('/api/priority-gaps/processed', authenticateToken, async (req, res) => 
     }
 });
 
+// get priority gaps data
 app.get('/api/chart-data/priority-gaps', authenticateToken, async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -157,6 +159,50 @@ app.get('/api/chart-data/priority-gaps', authenticateToken, async (req, res) => 
     }
 });
 
+// get recent priority gaps data
+app.get('/api/chart-data/priority-gaps/recent-data', authenticateToken, async (req, res) => {
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth() + 1;
+    let attempts = 0;
+    while (attempts < 12) {
+        try {
+            // Calculate next month for the upper bound
+            let nextMonth = currentMonth + 1;
+            let nextYear = currentYear;
+            if (nextMonth > 12) {
+                nextMonth = 1;
+                nextYear = currentYear + 1;
+            }
+
+            const { data, error } = await supabase
+                .from('priority_gaps')
+                .select('date, percentage, insurance')
+                .gte('date', `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`)
+                .lt('date', `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`);
+            
+            if (error) {
+                console.error('Error fetching recent data from Supabase:', error.message);
+                return res.status(500).json({ error: 'Failed to fetch recent data' });
+            }
+            if (data && data.length > 0) {
+                return res.json(data);
+            }
+            // No data? Go back a month
+            currentMonth--;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            attempts++;
+        } catch (e) {
+            console.error('Server error:', e);
+            return res.status(500).json({ error: 'An unexpected error occurred' });
+        }
+    }
+    res.status(404).json({ error: 'No recent data found in the past year' });
+});
+
+// get risk score data
 app.get('/api/chart-data/risk-score', authenticateToken, async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -176,22 +222,47 @@ app.get('/api/chart-data/risk-score', authenticateToken, async (req, res) => {
 });
 
 //get recent data for gaps
+// should get the most recent and valid months data
 app.get('/api/gaps/recent-data', authenticateToken, async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('closure_percentage')
-            .select('date, percentage, insurance')
-            .order('date', { ascending: false })
-            .limit(4); //CHANGE THIS TO HOW MANY INSURANCES THERE ARE
-        if (error) {
-            console.error('Error fetching recent data from Supabase:', error.message);
-            return res.status(500).json({ error: 'Failed to fetch recent data' });
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth() + 1;
+    let attempts = 0;
+    while (attempts < 12) {
+        try {
+            // Calculate next month for the upper bound
+            let nextMonth = currentMonth + 1;
+            let nextYear = currentYear;
+            if (nextMonth > 12) {
+                nextMonth = 1;
+                nextYear = currentYear + 1;
+            }
+
+            const { data, error } = await supabase
+                .from('closure_percentage')
+                .select('date, percentage, insurance')
+                .gte('date', `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`)
+                .lt('date', `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`);
+            
+            if (error) {
+                console.error('Error fetching recent data from Supabase:', error.message);
+                return res.status(500).json({ error: 'Failed to fetch recent data' });
+            }
+            if (data && data.length > 0) {
+                return res.json(data);
+            }
+            // No data? Go back a month
+            currentMonth--;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            attempts++;
+        } catch (e) {
+            console.error('Server error:', e);
+            return res.status(500).json({ error: 'An unexpected error occurred' });
         }
-        res.json(data);
-    } catch (e) {
-        console.error('Server error:', e);
-        res.status(500).json({ error: 'An unexpected error occurred' });
     }
+    res.status(404).json({ error: 'No recent data found in the past year' });
 });
 
 app.get('/api/chart-data', authenticateToken, async (req, res) => {
@@ -247,42 +318,47 @@ app.post('/api/gaps', authenticateToken, async (req, res) => {
     }
 });
 
-//Endpoint to get risk score data
-app.get('/api/chart-data/risk-score', authenticateToken, async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('risk_closure')
-            .select('date, percentage, insurance')
-            .order('date', { ascending: true });
-
-        if (error) {
-            console.error('Error fetching data from Supabase:', error.message);
-            return res.status(500).json({ error: 'Failed to fetch data' });
-        }
-        res.json(data);
-    } catch (e) {
-        console.error('Server error:', e);
-        res.status(500).json({ error: 'An unexpected error occurred' });
-    }
-});
-
 //get recent risk score data
 app.get('/api/chart-data/risk-score/recent-data', authenticateToken, async (req, res) => {
-    try {
-        const { data, error } = await supabase
-            .from('risk_closure')
-            .select('date, percentage, insurance')
-            .order('date', { ascending: false })
-            .limit(2); //CHANGE THIS TO HOW MANY INSURANCES THERE ARE
-        if (error) {
-            console.error('Error fetching recent data from Supabase:', error.message);
-            return res.status(500).json({ error: 'Failed to fetch recent data' });
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth() + 1;
+    let attempts = 0;
+    while (attempts < 12) {
+        try {
+            // Calculate next month for the upper bound
+            let nextMonth = currentMonth + 1;
+            let nextYear = currentYear;
+            if (nextMonth > 12) {
+                nextMonth = 1;
+                nextYear = currentYear + 1;
+            }
+
+            const { data, error } = await supabase
+                .from('risk_closure')
+                .select('date, percentage, insurance')
+                .gte('date', `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`)
+                .lt('date', `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`);
+            
+            if (error) {
+                console.error('Error fetching recent data from Supabase:', error.message);
+                return res.status(500).json({ error: 'Failed to fetch recent data' });
+            }
+            if (data && data.length > 0) {
+                return res.json(data);
+            }
+            // No data? Go back a month
+            currentMonth--;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            attempts++;
+        } catch (e) {
+            console.error('Server error:', e);
+            return res.status(500).json({ error: 'An unexpected error occurred' });
         }
-        res.json(data);
-    } catch (e) {
-        console.error('Server error:', e);
-        res.status(500).json({ error: 'An unexpected error occurred' });
     }
+    res.status(404).json({ error: 'No recent data found in the past year' });
 });
 
 //post new risk score data
@@ -357,6 +433,7 @@ app.post('/api/outreach', authenticateToken, async (req, res) => {
     }
 });
 
+
 //get outreach data
 app.get('/api/chart-data/outreach', authenticateToken, async (req, res) => {
     try {
@@ -373,6 +450,49 @@ app.get('/api/chart-data/outreach', authenticateToken, async (req, res) => {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });
     }
+});
+
+// get recent outreach data
+app.get('/api/chart-data/outreach/recent-data', authenticateToken, async (req, res) => {
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth() + 1;
+    let attempts = 0;
+    while (attempts < 12) {
+        try {
+            // Calculate next month for the upper bound
+            let nextMonth = currentMonth + 1;
+            let nextYear = currentYear;
+            if (nextMonth > 12) {
+                nextMonth = 1;
+                nextYear = currentYear + 1;
+            }
+
+            const { data, error } = await supabase
+                .from('pt_outreach')
+                .select('date, percentage, insurance')
+                .gte('date', `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`)
+                .lt('date', `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`);
+            
+            if (error) {
+                console.error('Error fetching recent data from Supabase:', error.message);
+                return res.status(500).json({ error: 'Failed to fetch recent data' });
+            }
+            if (data && data.length > 0) {
+                return res.json(data);
+            }
+            // No data? Go back a month
+            currentMonth--;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            attempts++;
+        } catch (e) {
+            console.error('Server error:', e);
+            return res.status(500).json({ error: 'An unexpected error occurred' });
+        }
+    }
+    res.status(404).json({ error: 'No recent data found in the past year' });
 });
 
 //Login endpoint

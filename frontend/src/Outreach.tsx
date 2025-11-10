@@ -27,6 +27,7 @@ const Outreach: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [resetKey, setResetKey] = useState(0);
+  const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [graphType, setGraphType] = useState<typeof graphsTypeOptions[number]>('line');
   const navigate = useNavigate();
@@ -41,14 +42,14 @@ const Outreach: React.FC = () => {
       console.error('Failed to fetch outreach chart data:', error);
       setError('Failed to load outreach chart data.');
     }
-    // try {
-    //   const response = await fetchWithAuth('/api/outreach/recent-data', {}, navigate);
-    //   const data = await response.json();
-    //   setRecentData(data);
-    // } catch (error) {
-    //   console.error('Failed to fetch recent outreach data:', error);
-    //   setError('Failed to load recent outreach data.');
-    // }
+    try {
+      const response = await fetchWithAuth('/api/chart-data/outreach/recent-data', {}, navigate);
+      const data = await response.json();
+      setRecentData(data);
+    } catch (error) {
+      console.error('Failed to fetch recent outreach data:', error);
+      setError('Failed to load recent outreach data.');
+    }
     setLoading(false);
   };
 
@@ -154,7 +155,7 @@ const Outreach: React.FC = () => {
             <div className="gaps-stats-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '100%' }}>
               <p className="gaps-stats-text" style={{ margin: '0.25rem' }}>Most Recent Outreach Data</p>
               <div style={{ width: '100%', maxWidth: 600, height: 300, minHeight: 200 }}>
-                {/* <Chart data={recentData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='bar'/> */}
+                {<Chart data={recentData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='bar'/> }
               </div>
             </div>
           </div>
