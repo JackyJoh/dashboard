@@ -67,7 +67,11 @@ app.post('/api/priority-gaps', authenticateToken, uploadHandler.single('excelFil
     }
     const filePath = req.file.path;
     const date = req.body.date; // Get date from the request body
-    const pythonProcess = spawn('python', ['excel_processor.py', filePath, date]);
+    
+    // Use python3 for production environments and full path to script
+    const pythonCommand = process.env.NODE_ENV === 'production' ? 'python3' : 'python';
+    const scriptPath = path.join(__dirname, 'excel_processor.py');
+    const pythonProcess = spawn(pythonCommand, [scriptPath, filePath, date]);
 
     let pythonOutput = '';
     let pythonError = '';
