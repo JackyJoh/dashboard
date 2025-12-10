@@ -84,11 +84,11 @@ const Settings: React.FC = () => {
             value={selectedTable}
             onChange={(e) => setSelectedTable(e.target.value)}
           >
-            <option value="closure_percentage">Care Gap Closure Data</option>
+            <option value="closure_percentage">Insurance Closure Data</option>
             <option value="risk_closure">Risk Closure Data</option>
             <option value="pt_outreach">Patient Outreach Data</option>
-            <option value="priority_gaps">Priority Metrics Data</option>
-            <option value="closure_earnings">Closure Earnings Data</option>
+            <option value="priority_gaps">Metrics Closure Data</option>
+            {/* <option value="closure_earnings">Closure Earnings Data</option> */}
           </select>
         </div>
       </div>
