@@ -34,23 +34,24 @@ const Outreach: React.FC = () => {
 
   const fetchChartData = async () => {
     try {
-      const response = await fetchWithAuth('/api/chart-data/outreach', {}, navigate);
-      const data = await response.json();
-      setChartData(data);
-      setLoading(false);
+      // Fetch both datasets in parallel
+      const [allDataResponse, recentDataResponse] = await Promise.all([
+        fetchWithAuth('/api/chart-data/outreach', {}, navigate),
+        fetchWithAuth('/api/chart-data/outreach/recent-data', {}, navigate)
+      ]);
+      
+      const allData = await allDataResponse.json();
+      const recentData = await recentDataResponse.json();
+      
+      // Set both states together
+      setChartData(allData);
+      setRecentData(recentData);
     } catch (error) {
       console.error('Failed to fetch outreach chart data:', error);
       setError('Failed to load outreach chart data.');
+    } finally {
+      setLoading(false);
     }
-    try {
-      const response = await fetchWithAuth('/api/chart-data/outreach/recent-data', {}, navigate);
-      const data = await response.json();
-      setRecentData(data);
-    } catch (error) {
-      console.error('Failed to fetch recent outreach data:', error);
-      setError('Failed to load recent outreach data.');
-    }
-    setLoading(false);
   };
 
   //rotate graph type

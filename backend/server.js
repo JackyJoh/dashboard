@@ -5,7 +5,8 @@ const path = require('path');
 const cors = require('cors');
 const multer = require('multer');
 const { spawn } = require('child_process'); 
-const fs = require('fs'); // Node.js built-in file system module
+const fs = require('fs');
+const Lambda = require('aws-sdk/clients/lambda');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -65,47 +66,104 @@ app.post('/api/priority-gaps', authenticateToken, uploadHandler.single('excelFil
     if (!req.body.date) {
         return res.status(400).json({ error: 'No date provided' });
     }
-    const filePath = req.file.path;
-    const date = req.body.date; // Get date from the request body
+
+    // Call AWS Lambda function to process the file
+    const lambda = new Lambda({
+        region: process.env.AWS_REGION,
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    });
+    const fileData = req.file;
+    const dateParam = req.body.date;
+
+    // Convert file to base64 string for Lambda
+    const fileBuffer = fs.readFileSync(fileData.path);
+    const fileBase64 = fileBuffer.toString('base64');
+
+    const lambdaParams = {
+        FunctionName: 'keyMetrics',
+        InvocationType: 'RequestResponse',
+        Payload: JSON.stringify({
+            excel_file: fileBase64,
+            date_param: dateParam,
+            is_base64: true
+        }),
+    };
     
-    // Use python3 for production environments and full path to script
-    const pythonCommand = process.env.NODE_ENV === 'production' ? 'python3' : 'python';
-    const scriptPath = path.join(__dirname, 'excel_processor.py');
-    const pythonProcess = spawn(pythonCommand, [scriptPath, filePath, date]);
-
-    let pythonOutput = '';
-    let pythonError = '';
-
-    pythonProcess.stdout.on('data', (data) => {
-        pythonOutput += data.toString();
-    });
-
-    pythonProcess.stderr.on('data', (data) => {
-        pythonError += data.toString();
-    });
-
-    pythonProcess.on('close', (code) => {
-        // Clean up the temporary file after processing
-        fs.unlink(filePath, (err) => {
-            if (err) console.error('Error cleaning up file:', err);
+    lambda.invoke(lambdaParams, (err, data) => {
+        // Delete the uploaded file after processing
+        fs.unlink(fileData.path, (unlinkErr) => {
+            if (unlinkErr) {
+                console.error('Error deleting uploaded file:', unlinkErr);
+            }
         });
-        
-        if (code !== 0) {
-            console.error('Python script failed:', pythonError);
-            return res.status(500).json({ 
-                error: 'Data processing failed in Python', 
-                details: pythonError 
-            });
+
+        if (err) {
+            console.error('Error invoking Lambda function:', err);
+            return res.status(500).json({ error: 'Failed to process file' });
         }
         
-        // 4. Send the processed JSON data back
-        try {
-            res.json(JSON.parse(pythonOutput));
-        } catch (e) {
-            console.error('Failed to parse Python JSON:', e);
-            res.status(500).json({ error: 'Invalid JSON response from processor.' });
+        // Parse Lambda response payload
+        const payload = JSON.parse(data.Payload);
+        
+        // Check for Lambda execution errors
+        if (payload.errorMessage) {
+            console.error('Lambda execution error:', payload.errorMessage);
+            return res.status(500).json({ error: 'Lambda execution failed', details: payload.errorMessage });
         }
+        
+        // Parse the body from Lambda response
+        const responseBody = JSON.parse(payload.body);
+        
+        // Check Lambda function's status code
+        if (payload.statusCode !== 200) {
+            console.error('Lambda function error:', responseBody);
+            return res.status(payload.statusCode).json(responseBody);
+        }
+        
+        // Return the metrics directly to match the old Python process behavior
+        res.json(responseBody);
     });
+    // // Use python3 for production environments and full path to script
+    // const pythonCommand = process.env.NODE_ENV === 'production' ? 'python3' : 'python';
+    // const scriptPath = path.join(__dirname, 'lambda_excel.py');
+    // const pythonProcess = spawn(pythonCommand, [scriptPath, fileData, date]);
+
+    // let pythonOutput = '';
+    // let pythonError = '';
+
+    // pythonProcess.stdout.on('data', (data) => {
+    //     pythonOutput += data.toString();
+    // });
+
+    // pythonProcess.stderr.on('data', (data) => {
+    //     pythonError += data.toString();
+    // });
+
+    // pythonProcess.on('close', (code) => {
+    //     // Clean up the temporary file after processing
+    //     fs.unlink(filePath, (err) => {
+    //         if (err) console.error('Error cleaning up file:', err);
+    //     });
+        
+    //     if (code !== 0) {
+    //         console.error('Python script failed:', pythonError);
+    //         return res.status(500).json({ 
+    //             error: 'Data processing failed in Python', 
+    //             details: pythonError 
+    //         });
+    //     }
+        
+    //     // 4. Send the processed JSON data back
+    //     try {
+    //         res.json(JSON.parse(pythonOutput));
+    //     } catch (e) {
+    //         console.error('Failed to parse Python JSON:', e);
+    //         res.status(500).json({ error: 'Invalid JSON response from processor.' });
+    //     }
+    // });
+
+    
 });
 
 // second route for processed data

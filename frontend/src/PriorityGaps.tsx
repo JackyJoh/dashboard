@@ -23,7 +23,7 @@ const PriorityGaps: React.FC = () => {
   const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [excelLoading, setExcelLoading] = useState<boolean>(false);
+  const [processing, setProcessing] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [graphType, setGraphType] = useState<typeof graphsTypeOptions[number]>('line');
 
@@ -38,22 +38,13 @@ const PriorityGaps: React.FC = () => {
       try {
         const response = await fetchWithAuth('/api/chart-data/priority-gaps', {}, navigate);
         const data = await response.json();
-        setExcelLoading(false);
+        
+        // Set both chartData and recentData from single fetch
         setChartData(data);
-        setLoading(false);
+        setRecentData(Array.isArray(data) ? data.slice(-1) : []);
       } catch (error) {
         console.error('Failed to fetch chart data:', error);
         setError('Failed to load chart data.');
-      }
-      try {
-        //Replace with recent data endpoint when available
-        const response2 = await fetchWithAuth('/api/chart-data/priority-gaps', {}, navigate);
-        const data2 = await response2.json();
-        // use last 1 entries as recent
-        setRecentData(Array.isArray(data2) ? data2.slice(-1) : []);
-      } catch (error) {
-        console.error('Failed to fetch recent data:', error);
-        setError('Failed to load recent data.');
       } finally {
         setLoading(false);
       }
@@ -84,8 +75,7 @@ const PriorityGaps: React.FC = () => {
 
     (async () => {
       try {
-        setLoading(true);
-        setExcelLoading(true);
+        setProcessing(true);
         setError(null);
 
         // 1) send the file to be processed by Python
@@ -95,7 +85,6 @@ const PriorityGaps: React.FC = () => {
           throw new Error(err.error || 'Processing failed');
         }
         const processed = await procResp.json();
-        setExcelLoading(false);
 
         // 2) save processed metrics to DB
         const saveResp = await fetchWithAuth('/api/priority-gaps/processed', {
@@ -110,7 +99,6 @@ const PriorityGaps: React.FC = () => {
         }
 
         // 3) refresh charts
-        setLoading(true);
         await fetchChartData();
 
         // reset
@@ -122,9 +110,7 @@ const PriorityGaps: React.FC = () => {
         console.error('Submit flow failed:', e);
         setError(e.message || 'Submission failed');
       } finally {
-        // Always clear excelLoading (processing state) when the submit flow finishes
-        setExcelLoading(false);
-        setLoading(false);
+        setProcessing(false);
       }
     })();
     
@@ -227,8 +213,8 @@ const PriorityGaps: React.FC = () => {
             <div className="gaps-stats-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '100%' }}>
               <p className="gaps-stats-text" style={{ margin: '0.25rem' }}>Most Recent Metric Gap Data</p>
                 <div style={{ width: '100%', maxWidth: 600, height: 300, minHeight: 200, borderRadius: '8px', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {excelLoading ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '2rem' }}>Processing Excel file...</div>
+                  {processing ? (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '1.5rem', color: '#6366f1', fontWeight: '500' }}>Processing file...</div>
                   ) : (
                     <Chart data={memoRecentLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='bar' />
                   )}
@@ -262,8 +248,8 @@ const PriorityGaps: React.FC = () => {
             </button>
           </div>
           <div style={{ width: '100%', height: 400, minHeight: 300 }}>
-            {excelLoading ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '4rem' }}>Processing Excel file...</div>
+            {processing ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '2rem', color: '#6366f1', fontWeight: '500' }}>Processing file...</div>
             ) : (
               <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType={graphType} />
             )}
