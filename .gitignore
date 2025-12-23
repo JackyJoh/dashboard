@@ -28,3 +28,7 @@ build/
 *.tmp
 *.temp
 .cache/
+
+metric_instruction.docx
+# Temp Data
+data/
