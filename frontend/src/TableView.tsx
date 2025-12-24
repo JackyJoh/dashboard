@@ -18,6 +18,21 @@ const TableView: React.FC<TableViewProps> = ({ data, onDelete, headers }) => {
     return [];
   }, [headers, data]);
 
+  // Helper function to format cell values
+  const formatCellValue = (value: any, header: string): string => {
+    if (value === null || value === undefined) return '';
+    
+    // Format date fields (assuming date column names contain 'date' or are specifically 'date')
+    if (header.toLowerCase().includes('date') && typeof value === 'string') {
+      // If it's an ISO date string, extract just the date part
+      if (value.includes('T')) {
+        return value.split('T')[0];
+      }
+    }
+    
+    return String(value);
+  };
+
   if (!data || data.length === 0) {
     return (
       <tbody>
@@ -33,7 +48,7 @@ const TableView: React.FC<TableViewProps> = ({ data, onDelete, headers }) => {
       {data.map((row, rowIndex) => (
         <tr key={rowIndex}>
           {effectiveHeaders.map(header => (
-            <td key={header}>{String(row[header] ?? '')}</td>
+            <td key={header}>{formatCellValue(row[header], header)}</td>
           ))}
           <td>
             <button

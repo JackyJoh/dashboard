@@ -1,5 +1,5 @@
 const express = require('express');
-const { createClient } = require('@supabase/supabase-js');
+const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const cors = require('cors');
@@ -9,9 +9,12 @@ const fs = require('fs');
 const Lambda = require('aws-sdk/clients/lambda');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Initialize PostgreSQL connection pool
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
+});
 
 // Create express app   
 const app = express();
@@ -185,17 +188,12 @@ app.post('/api/priority-gaps/processed', authenticateToken, async (req, res) => 
             colo_cancer: metrics.colorectal_cancer ?? null,
         };
 
-        const { data, error } = await supabase
-            .from('priority_gaps')
-            .insert([insertObj])
-            .select();
+        const query = `INSERT INTO priority_gaps (date, diabetes, blood_pressure, breast_cancer, colo_cancer) VALUES ($1, $2, $3, $4, $5) RETURNING *`;
+        const values = [date, metrics.diabetes ?? null, metrics.blood_pressure ?? null, metrics.breast_cancer ?? null, metrics.colorectal_cancer ?? null];
+        const result = await pool.query(query, values);
 
-        if (error) {
-            console.error('Error inserting processed data:', error.message);
-            return res.status(500).json({ error: 'Failed to save processed data.' });
-        }
         // Return the inserted row(s) to the client
-        res.status(201).json(data);
+        res.status(201).json(result.rows);
     } catch (e) {
         console.error('Server error on processed data insert:', e);
         res.status(500).json({ error: 'An unexpected error occurred.' });
@@ -205,16 +203,9 @@ app.post('/api/priority-gaps/processed', authenticateToken, async (req, res) => 
 // get priority gaps data
 app.get('/api/chart-data/priority-gaps', authenticateToken, async (req, res) => {
     try {
-        const { data, error } = await supabase
-            .from('priority_gaps')
-            .select('date, diabetes, blood_pressure, breast_cancer, colo_cancer')
-            .order('date', { ascending: true });
-
-        if (error) {
-            console.error('Error fetching data from Supabase:', error.message);
-            return res.status(500).json({ error: 'Failed to fetch data' });
-        }
-        res.json(data);
+        const query = `SELECT date, diabetes, blood_pressure, breast_cancer, colo_cancer FROM priority_gaps ORDER BY date ASC`;
+        const result = await pool.query(query);
+        res.json(result.rows);
     } catch (e) {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });
@@ -236,18 +227,13 @@ app.get('/api/chart-data/priority-gaps/recent-data', authenticateToken, async (r
                 nextYear = currentYear + 1;
             }
 
-            const { data, error } = await supabase
-                .from('priority_gaps')
-                .select('date, percentage, insurance')
-                .gte('date', `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`)
-                .lt('date', `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`);
+            const query = `SELECT date, percentage, insurance FROM priority_gaps WHERE date >= $1 AND date < $2`;
+            const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+            const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+            const result = await pool.query(query, [startDate, endDate]);
             
-            if (error) {
-                console.error('Error fetching recent data from Supabase:', error.message);
-                return res.status(500).json({ error: 'Failed to fetch recent data' });
-            }
-            if (data && data.length > 0) {
-                return res.json(data);
+            if (result.rows.length > 0) {
+                return res.json(result.rows);
             }
             // No data? Go back a month
             currentMonth--;
@@ -267,16 +253,9 @@ app.get('/api/chart-data/priority-gaps/recent-data', authenticateToken, async (r
 // get risk score data
 app.get('/api/chart-data/risk-score', authenticateToken, async (req, res) => {
     try {
-        const { data, error } = await supabase
-            .from('risk_closure')
-            .select('date, percentage, insurance')
-            .order('date', { ascending: true });
-
-        if (error) {
-            console.error('Error fetching data from Supabase:', error.message);
-            return res.status(500).json({ error: 'Failed to fetch data' });
-        }
-        res.json(data);
+        const query = `SELECT date, percentage, insurance FROM risk_closure ORDER BY date ASC`;
+        const result = await pool.query(query);
+        res.json(result.rows);
     } catch (e) {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });
@@ -299,18 +278,13 @@ app.get('/api/gaps/recent-data', authenticateToken, async (req, res) => {
                 nextYear = currentYear + 1;
             }
 
-            const { data, error } = await supabase
-                .from('closure_percentage')
-                .select('date, percentage, insurance')
-                .gte('date', `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`)
-                .lt('date', `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`);
+            const query = `SELECT date, percentage, insurance FROM closure_percentage WHERE date >= $1 AND date < $2`;
+            const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+            const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+            const result = await pool.query(query, [startDate, endDate]);
             
-            if (error) {
-                console.error('Error fetching recent data from Supabase:', error.message);
-                return res.status(500).json({ error: 'Failed to fetch recent data' });
-            }
-            if (data && data.length > 0) {
-                return res.json(data);
+            if (result.rows.length > 0) {
+                return res.json(result.rows);
             }
             // No data? Go back a month
             currentMonth--;
@@ -329,16 +303,9 @@ app.get('/api/gaps/recent-data', authenticateToken, async (req, res) => {
 
 app.get('/api/chart-data', authenticateToken, async (req, res) => {
     try {
-        const { data, error } = await supabase
-        .from('closure_percentage')
-        .select('date, percentage, insurance')
-        .order('date', { ascending: true });
-
-        if (error) {
-            console.error('Error fetching data from Supabase:', error.message);
-            return res.status(500).json({ error: 'Failed to fetch data' });
-        }
-        res.json(data);
+        const query = `SELECT date, percentage, insurance FROM closure_percentage ORDER BY date ASC`;
+        const result = await pool.query(query);
+        res.json(result.rows);
     } catch (e) {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });
@@ -364,16 +331,10 @@ app.post('/api/gaps', authenticateToken, async (req, res) => {
     }
     
     try {
-        const { data, error } = await supabase
-            .from('closure_percentage')
-            .insert([{ numerator, denominator, date, insurance }])
-            .select();
-
-        if (error) {
-            console.error('Error inserting data:', error.message);
-            return res.status(500).json({ error: 'Failed to insert new record' });
-        }
-        res.status(201).json(data);
+        const query = `INSERT INTO closure_percentage (numerator, denominator, date, insurance) VALUES ($1, $2, $3, $4) RETURNING *`;
+        const values = [numerator, denominator, date, insurance];
+        const result = await pool.query(query, values);
+        res.status(201).json(result.rows);
     } catch (e) {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });
@@ -395,18 +356,13 @@ app.get('/api/chart-data/risk-score/recent-data', authenticateToken, async (req,
                 nextYear = currentYear + 1;
             }
 
-            const { data, error } = await supabase
-                .from('risk_closure')
-                .select('date, percentage, insurance')
-                .gte('date', `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`)
-                .lt('date', `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`);
+            const query = `SELECT date, percentage, insurance FROM risk_closure WHERE date >= $1 AND date < $2`;
+            const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+            const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+            const result = await pool.query(query, [startDate, endDate]);
             
-            if (error) {
-                console.error('Error fetching recent data from Supabase:', error.message);
-                return res.status(500).json({ error: 'Failed to fetch recent data' });
-            }
-            if (data && data.length > 0) {
-                return res.json(data);
+            if (result.rows.length > 0) {
+                return res.json(result.rows);
             }
             // No data? Go back a month
             currentMonth--;
@@ -427,16 +383,10 @@ app.get('/api/chart-data/risk-score/recent-data', authenticateToken, async (req,
 app.post('/api/risk', authenticateToken, async (req, res) => {
     const { percentage, date, insurance } = req.body;
     try {
-        const { data, error } = await supabase
-            .from('risk_closure')
-            .insert([{ percentage, date, insurance }])
-            .select();
-
-        if (error) {
-            console.error('Error inserting data:', error.message);
-            return res.status(500).json({ error: 'Failed to insert new record' });
-        }
-        res.status(201).json(data);
+        const query = `INSERT INTO risk_closure (percentage, date, insurance) VALUES ($1, $2, $3) RETURNING *`;
+        const values = [percentage, date, insurance];
+        const result = await pool.query(query, values);
+        res.status(201).json(result.rows);
     } catch (e) {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });
@@ -446,15 +396,9 @@ app.post('/api/risk', authenticateToken, async (req, res) => {
 //get earnings data
 app.get('/api/chart-data/earnings', authenticateToken, async (req, res) => {
     try {
-        const { data, error } = await supabase
-            .from('closure_earnings')
-            .select('insurance, earnings');
-
-        if (error) {
-            console.error('Error fetching earnings data:', error.message);
-            return res.status(500).json({ error: 'Failed to fetch earnings data' });
-        }
-        res.json(data);
+        const query = `SELECT insurance, earnings FROM closure_earnings`;
+        const result = await pool.query(query);
+        res.json(result.rows);
     } catch (e) {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });
@@ -479,16 +423,10 @@ app.post('/api/outreach', authenticateToken, async (req, res) => {
     }
     
     try {
-        const { data, error } = await supabase
-            .from('pt_outreach')
-            .insert([{ numerator, denominator, date, insurance }])
-            .select();
-
-        if (error) {
-            console.error('Error inserting data:', error.message);
-            return res.status(500).json({ error: 'Failed to insert new record' });
-        }
-        res.status(201).json(data);
+        const query = `INSERT INTO pt_outreach (numerator, denominator, date, insurance) VALUES ($1, $2, $3, $4) RETURNING *`;
+        const values = [numerator, denominator, date, insurance];
+        const result = await pool.query(query, values);
+        res.status(201).json(result.rows);
     } catch (e) {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });
@@ -499,15 +437,9 @@ app.post('/api/outreach', authenticateToken, async (req, res) => {
 //get outreach data
 app.get('/api/chart-data/outreach', authenticateToken, async (req, res) => {
     try {
-        const { data, error } = await supabase
-            .from('pt_outreach')
-            .select('date, percentage, insurance')
-            .order('date', { ascending: true });
-        if (error) {
-            console.error('Error fetching data from Supabase:', error.message);
-            return res.status(500).json({ error: 'Failed to fetch data' });
-        }
-        res.json(data);
+        const query = `SELECT date, percentage, insurance FROM pt_outreach ORDER BY date ASC`;
+        const result = await pool.query(query);
+        res.json(result.rows);
     } catch (e) {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });
@@ -529,18 +461,13 @@ app.get('/api/chart-data/outreach/recent-data', authenticateToken, async (req, r
                 nextYear = currentYear + 1;
             }
 
-            const { data, error } = await supabase
-                .from('pt_outreach')
-                .select('date, percentage, insurance')
-                .gte('date', `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`)
-                .lt('date', `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`);
+            const query = `SELECT date, percentage, insurance FROM pt_outreach WHERE date >= $1 AND date < $2`;
+            const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
+            const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
+            const result = await pool.query(query, [startDate, endDate]);
             
-            if (error) {
-                console.error('Error fetching recent data from Supabase:', error.message);
-                return res.status(500).json({ error: 'Failed to fetch recent data' });
-            }
-            if (data && data.length > 0) {
-                return res.json(data);
+            if (result.rows.length > 0) {
+                return res.json(result.rows);
             }
             // No data? Go back a month
             currentMonth--;
@@ -570,19 +497,11 @@ app.post('/api/login', (req, res) => {
 //fetch all data for the table view
 app.get('/api/table-data/:tableName', authenticateToken, async (req, res) => {
     const { tableName } = req.params;
-    let query = supabase.from(tableName).select('*');
-    if (tableName === 'closure_percentage' || tableName === 'risk_closure') {
-        query = query.order('date', { ascending: false });
-    } else {
-        query = query.order('id', { ascending: false });
-    }
+    let orderBy = (tableName === 'closure_percentage' || tableName === 'risk_closure') ? 'date DESC' : 'id DESC';
+    const query = `SELECT * FROM ${tableName} ORDER BY ${orderBy}`;
     try {
-        const { data, error } = await query;
-        if (error) {
-            console.error('Error fetching table data:', error.message);
-            return res.status(500).json({ error: 'Failed to fetch table data' });
-        }
-        res.json(data);
+        const result = await pool.query(query);
+        res.json(result.rows);
     } catch (e) {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });
@@ -593,14 +512,10 @@ app.get('/api/table-data/:tableName', authenticateToken, async (req, res) => {
 app.delete('/api/table-data/:tableName/:id', authenticateToken, async (req, res) => {
     const { tableName, id } = req.params;
     try {
-        const { error } = await supabase
-            .from(tableName)
-            .delete()
-            .eq('id', id);
-
-        if (error) {
-            console.error('Error deleting record:', error.message);
-            return res.status(500).json({ error: 'Failed to delete record' });
+        const query = `DELETE FROM ${tableName} WHERE id = $1`;
+        const result = await pool.query(query, [id]);
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Record not found' });
         }
         res.status(200).json({ message: `Record with id ${id} deleted successfully.` });
     } catch (e) {
