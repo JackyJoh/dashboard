@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import './styles.css';
 import { Routes, Route, useNavigate } from 'react-router-dom';
-import Gaps from './Gaps';
-import RiskScore from './RiskScore';
+import Gaps from './pages/Gaps';
+import RiskScore from './pages/RiskScore';
 import Login from './Login';
 import { useBodyClass } from './useBodyClass';
-import Settings from './Settings';
+import Settings from './pages/Settings';
 import Dashboard from './Dashboard';
-import Outreach from './Outreach';
-import PriorityGaps from './PriorityGaps';
+import Outreach from './pages/Outreach';
+import PriorityGaps from './pages/PriorityGaps';
 import ProtectedRoute from './ProtectedRoute';
 
 
@@ -37,7 +37,7 @@ function App() {
       <Route path="/risk" element={<ProtectedRoute><RiskScore /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/outreach" element={<ProtectedRoute><Outreach /></ProtectedRoute>} />
-      <Route path="*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />s
     </Routes>
   );
 }

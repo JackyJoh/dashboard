@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Chart from './Chart';
-import Layout from './Layout';
-import Grid from './Grid';
+import Layout from './components/Layout';
+import Grid from './components/Grid';
 import { fetchWithAuth } from './api';
 import { useNavigate } from 'react-router-dom';
 

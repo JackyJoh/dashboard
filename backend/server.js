@@ -9,7 +9,7 @@ const fs = require('fs');
 const Lambda = require('aws-sdk/clients/lambda');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
-
+// Express server for NCH dashboard API
 // Initialize PostgreSQL connection pool
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,

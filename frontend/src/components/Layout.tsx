@@ -1,8 +1,8 @@
 // src/Layout.tsx
 import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
-import './styles.css';
-import { useBodyClass } from './useBodyClass';
+import '../styles.css';
+import { useBodyClass } from '../useBodyClass';
 import { jsPDF } from 'jspdf';
 
 interface LayoutProps {

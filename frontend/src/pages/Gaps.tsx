@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import Layout from './Layout';
-import DataEntryForm from './DataEntryForm';
-import type { FormField } from './DataEntryForm';
-import Chart from './Chart';
+import Layout from '../components/Layout';
+import DataEntryForm from '../components/DataEntryForm';
+import type { FormField } from '../components/DataEntryForm';
+import Chart from '../Chart';
 import { useNavigate } from 'react-router-dom';
-import { fetchWithAuth } from './api';
+import { fetchWithAuth } from '../api';
 import { CSVLink } from "react-csv";
 
 

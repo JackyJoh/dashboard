@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import Layout from './Layout';
-import Chart from './Chart';
-import { fetchWithAuth } from './api'; // Import the new utility
+import Layout from '../components/Layout';
+import Chart from '../Chart';
+import { fetchWithAuth } from '../api'; // Import the new utility
 import { useNavigate } from 'react-router-dom';
 import { CSVLink } from 'react-csv';
 

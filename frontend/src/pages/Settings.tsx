@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import Layout from './Layout';
-import { fetchWithAuth } from './api';
+import Layout from '../components/Layout';
+import { fetchWithAuth } from '../api';
 import { useNavigate } from 'react-router-dom';
-import TableView from './TableView';
-import './styles.css';
+import TableView from '../components/TableView';
+import '../styles.css';
 
 
 const Settings: React.FC = () => {

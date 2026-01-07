@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
-import './styles.css';
+import '../styles.css';
 
 // This is the structure for our new fields prop
 export interface FormField { 

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import Layout from './Layout';
-import DataEntryForm from './DataEntryForm';
-import type { FormField } from './DataEntryForm';
-import Chart from './Chart';
-import { fetchWithAuth } from './api'; // Import the new utility
+import Layout from '../components/Layout';
+import DataEntryForm from '../components/DataEntryForm';
+import type { FormField } from '../components/DataEntryForm';
+import Chart from '../Chart';
 import { useNavigate } from 'react-router-dom';
+import { fetchWithAuth } from '../api';
 import { CSVLink } from 'react-csv';
 
 interface ChartDataRecord {
@@ -13,45 +13,45 @@ interface ChartDataRecord {
   insurance: string;
 }
 
-const gapsFormFields: FormField[] = [
-  { label: 'Risk Closure Rate', name: 'percentage', type: 'text', placeholder: 'Enter the percentage' },
+const outreachFormFields: FormField[] = [
+  { label: 'Outreach Rate', name: 'percentage', type: 'text', placeholder: 'Patients Outreached / Total (eg. 85/120)' },
   { label: 'Date', name: 'date', type: 'date' },
   { label: 'Insurance', name: 'insurance', type: 'select', options: ['MyBlue', 'BCBS APO', 'Optum', 'WellMed'] },
 ];
 
 const graphsTypeOptions = ['line', 'bar', 'pie'] as const;
 
-const RiskScore: React.FC = () => {
+const Outreach: React.FC = () => {
   const [chartData, setChartData] = useState<ChartDataRecord[]>([]);
-  const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
+//   const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resetKey, setResetKey] = useState(0); // New state to control the form reset
+  const [resetKey, setResetKey] = useState(0);
+  const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const navigate = useNavigate();
   const [graphType, setGraphType] = useState<typeof graphsTypeOptions[number]>('line');
+  const navigate = useNavigate();
 
-
-  //get risk score data
   const fetchChartData = async () => {
     try {
-      const response = await fetchWithAuth('/api/chart-data/risk-score', {}, navigate);
-      const data = await response.json();
-      setChartData(data);
+      // Fetch both datasets in parallel
+      const [allDataResponse, recentDataResponse] = await Promise.all([
+        fetchWithAuth('/api/chart-data/outreach', {}, navigate),
+        fetchWithAuth('/api/chart-data/outreach/recent-data', {}, navigate)
+      ]);
+      
+      const allData = await allDataResponse.json();
+      const recentData = await recentDataResponse.json();
+      
+      // Set both states together
+      setChartData(allData);
+      setRecentData(recentData);
     } catch (error) {
-      console.error('Failed to fetch chart data:', error);
-      setError('Failed to load chart data.');
-    }
-    try {
-      const response = await fetchWithAuth('/api/chart-data/risk-score/recent-data', {}, navigate);
-      const data = await response.json();
-      setRecentData(data);
-    } catch (error) {
-      console.error('Failed to fetch recent data:', error);
-      setError('Failed to load recent data.');
+      console.error('Failed to fetch outreach chart data:', error);
+      setError('Failed to load outreach chart data.');
     } finally {
       setLoading(false);
-  };
+    }
   };
 
   //rotate graph type
@@ -64,8 +64,27 @@ const RiskScore: React.FC = () => {
   }
 
   const handleFormSubmit = async (formData: Record<string, string>) => {
-    const percentage = Number.parseFloat(formData.percentage);
-    const { date, insurance } = formData;
+    const { percentage, date, insurance } = formData;
+
+    if (!percentage) {
+      alert('Please enter a valid percentage.');
+      return;
+    }
+
+    // Validate percentage format (numerator/denominator)
+    const parts = percentage.split('/');
+    if (parts.length !== 2) {
+      alert('Percentage must be in format "numerator/denominator" (e.g., 85/120)');
+      return;
+    }
+    
+    const numerator = parseInt(parts[0].trim(), 10);
+    const denominator = parseInt(parts[1].trim(), 10);
+    
+    if (isNaN(numerator) || isNaN(denominator) || numerator < 0 || denominator <= 0) {
+      alert('Please enter valid numbers for numerator and denominator (denominator must be greater than 0)');
+      return;
+    }
 
     if (!date) {
       alert('Please enter a valid date.');
@@ -77,28 +96,29 @@ const RiskScore: React.FC = () => {
     }
 
     try {
-      const response = await fetch('/api/risk', {
+      const response = await fetchWithAuth('/api/outreach', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ percentage, date, insurance }),
-      });
-
+      }, navigate);
+      
       if (!response.ok) {
-        throw new Error('Failed to add new data entry.');
+        const errorData = await response.json();
+        console.error('Server error:', errorData);
+        alert(`Error: ${errorData.error || 'Failed to submit data'}`);
+        return;
       }
       
       const newEntry = await response.json();
-      console.log('New entry added successfully:', newEntry);
+      console.log('New outreach entry added successfully:', newEntry);
 
-      // Reset the form by updating the resetKey
       setResetKey(prevKey => prevKey + 1);
-
       await fetchChartData();
       
     } catch (error) {
-      console.error('Submission error:', error);
+      console.error('Outreach submission error:', error);
     }
   };
 
@@ -126,16 +146,18 @@ const RiskScore: React.FC = () => {
         <div className="gaps-top-row">
           <div className="gaps-top-row-item">
             <DataEntryForm
-              title="Add New Risk Closure Data Point"
-              fields={gapsFormFields}
+              title="Add New Outreach Data Point"
+              fields={outreachFormFields}
               onSubmit={handleFormSubmit}
-              resetKey={resetKey} // Pass the reset key to the child component
+              resetKey={resetKey}
             />
           </div>
           <div className="gaps-top-row-item">
-            <div className="gaps-stats-container">
-              {/* <p className="gaps-stats-text">Other Statistics</p> */}
-              <Chart data={recentData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='bar'/>
+            <div className="gaps-stats-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '100%' }}>
+              <p className="gaps-stats-text" style={{ margin: '0.25rem' }}>Most Recent Outreach Data</p>
+              <div style={{ width: '100%', maxWidth: 600, height: 300, minHeight: 200 }}>
+                {<Chart data={recentData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='bar'/> }
+              </div>
             </div>
           </div>
         </div>
@@ -150,7 +172,7 @@ const RiskScore: React.FC = () => {
             </button>
             <CSVLink 
               data={chartData}
-              filename={"risk_score_data.csv"}
+              filename={"patient_outreach_data.csv"}
               className="small-btn"
               aria-label="Download CSV"
             >
@@ -158,10 +180,10 @@ const RiskScore: React.FC = () => {
             </CSVLink>
             <button 
               className="small-btn"
-              aria-label="Third button"
+              aria-label="Change graph type"
               onClick={rotateGraphType}
             >
-              <img src="/73450.png" alt="Third button" />
+              <img src="/73450.png" alt="Change graph type" />
             </button>
           </div>
           <div style={{ width: '100%', height: 400, minHeight: 300 }}>
@@ -215,7 +237,7 @@ const RiskScore: React.FC = () => {
               ✕
             </button>
             <h2 style={{ marginTop: 0, marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.75rem', color: '#333' }}>
-              Risk Score Closures over Time
+              Patient Outreach over Time
             </h2>
             <div style={{ width: '100%', height: 'calc(100% - 4rem)' }}>
               <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
@@ -227,4 +249,4 @@ const RiskScore: React.FC = () => {
   );
 };
 
-export default RiskScore;
+export default Outreach;
