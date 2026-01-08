@@ -116,32 +116,37 @@ const Dashboard: React.FC = () => {
 
   return (
     <Layout showHeader={true}>
-      <Grid>
-        <div className="card-white">
-          <div style={{ width: '100%', height: '100%' }}>
-            <h4>Insurance Care Gap Closure Over Time</h4>
-            <Chart id="careGapChart" data={gapsChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Grid>
+          <div className="card-white">
+            <div style={{ width: '100%', height: '100%' }}>
+              <h4>Insurance Care Gap Closure Over Time</h4>
+              <Chart id="careGapChart" data={gapsChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+            </div>
           </div>
-        </div>
-        <div className="card-white">
-          <div style={{ width: '100%', height: '100%' }}>
-            <h4>Patient Outreach Over Time</h4>
-            <Chart id="outreachChart" data={outreachChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+          <div className="card-white">
+            <div style={{ width: '100%', height: '100%' }}>
+              <h4>Patient Outreach Over Time</h4>
+              <Chart id="outreachChart" data={outreachChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+            </div>
           </div>
-        </div>
-        <div className="card-white">
-          <div style={{ width: '100%', height: '100%' }}>
-            <h4>Risk Score Over Time</h4>
-            <Chart id="riskScoreChart" data={riskChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='line' />
+          <div className="card-white">
+            <div style={{ width: '100%', height: '100%' }}>
+              <h4>Risk Score Over Time</h4>
+              <Chart id="riskScoreChart" data={riskChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='line' />
+            </div>
           </div>
-        </div>
-        <div className="card-white">
-          <div style={{ width: '100%', height: '100%' }}>
-            <h4>Priority Metric Closures Over Time</h4>
-            <Chart id="metricGapsChart" data={memoMetricGapsLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line'/>
+          <div className="card-white">
+            <div style={{ width: '100%', height: '100%' }}>
+              <h4>Priority Metric Closures Over Time</h4>
+              <Chart id="metricGapsChart" data={memoMetricGapsLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line'/>
+            </div>
           </div>
+        </Grid>
+        <div className="dashboard-copyright">
+          © {new Date().getFullYear()} Naples Comprehensive Health. All rights reserved.
         </div>
-      </Grid>
+      </div>
     </Layout>
   );
 };
