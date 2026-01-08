@@ -32,34 +32,39 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="login-container">
-      <form onSubmit={handleSubmit} className="login-form">
-        <div className="login-header">
-          <img src="logo.png"></img>
-          <p className="login-subtitle">Dashboard Sign In</p>
-        </div>
-        <div className="form-group">
-          <label htmlFor="username">Username</label>
-          <input
-            id="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit">Login</button>
-      </form>
+    <div className="login-page">
+      <div className="login-container">
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="login-header">
+            <img src="logo.png"></img>
+            <p className="login-subtitle">Dashboard Sign In</p>
+          </div>
+          <div className="form-group">
+            <label htmlFor="username">Username</label>
+            <input
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit">Login</button>
+        </form>
+      </div>
+      <div className="copyright">
+        © {new Date().getFullYear()} Naples Comprehensive Health. All rights reserved.
+      </div>
     </div>
   );
 };

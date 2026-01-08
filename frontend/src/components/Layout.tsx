@@ -125,6 +125,9 @@ const Layout: React.FC<LayoutProps> = ({ children, showHeader = true }) => {
           {children}
         </div>
       </div>
+      <div className="dashboard-copyright">
+        © {new Date().getFullYear()} Naples Comprehensive Health. All rights reserved.
+      </div>
     </div>
   );
 };
