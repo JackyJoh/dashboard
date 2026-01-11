@@ -42,14 +42,39 @@ const Chart: React.FC<ChartProps> = ({ data, graphType, xColumn, yColumn, groupC
       return;
     }
     
+    // Helper function to get responsive font sizes
+    const getFontSize = (mobile: number, desktop: number) => {
+      return window.innerWidth < 768 ? mobile : desktop;
+    };
+    
     let labels: string[] = [];
     let datasets: any[] = [];
     let options: any = {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: true },
-        tooltip: { mode: 'index', intersect: false }
+        legend: { 
+          display: true,
+          position: window.innerWidth < 768 ? 'bottom' : 'top',
+          labels: {
+            boxWidth: getFontSize(12, 15),
+            padding: getFontSize(8, 10),
+            font: {
+              size: getFontSize(10, 12)
+            }
+          }
+        },
+        tooltip: { 
+          mode: 'index', 
+          intersect: false,
+          padding: getFontSize(6, 10),
+          bodyFont: {
+            size: getFontSize(11, 13)
+          },
+          titleFont: {
+            size: getFontSize(11, 13)
+          }
+        }
       }
     };
 
@@ -105,14 +130,42 @@ const Chart: React.FC<ChartProps> = ({ data, graphType, xColumn, yColumn, groupC
       options.scales = {
         y: {
           beginAtZero: true,
-          title: { display: true, text: yColumn },
+          title: { 
+            display: true, 
+            text: yColumn,
+            font: {
+              size: getFontSize(11, 13)
+            }
+          },
+          ticks: {
+            font: {
+              size: getFontSize(9, 11)
+            }
+          },
           min: 0,
           max: maxY
         },
         x: {
           type: 'time',
-          time: { unit: 'month', tooltipFormat: 'MMM yyyy', displayFormats: { month: 'MMM yyyy' } },
-          title: { display: true, text: xColumn }
+          time: { 
+            unit: 'month', 
+            tooltipFormat: 'MMM yyyy', 
+            displayFormats: { month: 'MMM yyyy' } 
+          },
+          title: { 
+            display: true, 
+            text: xColumn,
+            font: {
+              size: getFontSize(11, 13)
+            }
+          },
+          ticks: {
+            font: {
+              size: getFontSize(9, 11)
+            },
+            maxRotation: getFontSize(45, 0),
+            minRotation: getFontSize(45, 0)
+          }
         }
       };
 

@@ -112,10 +112,18 @@ const Layout: React.FC<LayoutProps> = ({ children, showHeader = true }) => {
           </div>
         </header>
       )}
+      
+      {/* Mobile-only menu button when header is hidden */}
+      {!showHeader && (
+        <button className="mobile-menu-button" onClick={toggleSidebar} aria-label="Open menu">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      )}
 
       <div 
-        id="overlay" 
-        className={`hidden fixed inset-0 bg-black opacity-50 z-40 md:hidden ${isSidebarOpen ? 'block' : 'hidden'}`}
+        id="overlay"
         onClick={closeSidebar}
       ></div>
 

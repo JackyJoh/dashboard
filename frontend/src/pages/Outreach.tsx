@@ -154,15 +154,15 @@ const Outreach: React.FC = () => {
           </div>
           <div className="gaps-top-row-item">
             <div className="gaps-stats-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '100%' }}>
-              <p className="gaps-stats-text" style={{ margin: '0.25rem' }}>Most Recent Outreach Data</p>
-              <div style={{ width: '100%', maxWidth: 600, height: 300, minHeight: 200 }}>
+              <p className="gaps-stats-text" style={{ margin: '0.25rem', fontSize: 'clamp(0.9rem, 2.5vw, 1.125rem)' }}>Most Recent Outreach Data</p>
+              <div style={{ width: '100%', maxWidth: 600, height: '100%', minHeight: 200, flex: 1 }}>
                 {<Chart data={recentData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='bar'/> }
               </div>
             </div>
           </div>
         </div>
         <div className="gaps-chart-full-width-container">
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
             <button 
               className="small-btn"
               aria-label="Fullscreen"
@@ -186,7 +186,7 @@ const Outreach: React.FC = () => {
               <img src="/73450.png" alt="Change graph type" />
             </button>
           </div>
-          <div style={{ width: '100%', height: 400, minHeight: 300 }}>
+          <div style={{ width: '100%', height: 'clamp(300px, 50vh, 500px)', minHeight: 250 }}>
             <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
           </div>
         </div>
@@ -206,7 +206,7 @@ const Outreach: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '2rem',
+            padding: 'clamp(0.5rem, 3vw, 2rem)',
           }}
           onClick={() => setIsFullscreen(false)}
         >
@@ -216,7 +216,7 @@ const Outreach: React.FC = () => {
               height: '90%',
               backgroundColor: 'white',
               borderRadius: '8px',
-              padding: '2rem',
+              padding: 'clamp(1rem, 3vw, 2rem)',
               position: 'relative',
             }}
             onClick={(e) => e.stopPropagation()}
@@ -225,18 +225,18 @@ const Outreach: React.FC = () => {
               onClick={() => setIsFullscreen(false)}
               style={{
                 position: 'absolute',
-                top: '1rem',
-                right: '1rem',
+                top: 'clamp(0.5rem, 2vw, 1rem)',
+                right: 'clamp(0.5rem, 2vw, 1rem)',
                 background: 'transparent',
                 border: 'none',
-                fontSize: '2rem',
+                fontSize: 'clamp(1.5rem, 4vw, 2rem)',
                 cursor: 'pointer',
                 color: '#666',
               }}
             >
               ✕
             </button>
-            <h2 style={{ marginTop: 0, marginBottom: '1.5rem', textAlign: 'center', fontSize: '1.75rem', color: '#333' }}>
+            <h2 style={{ marginTop: 0, marginBottom: '1.5rem', textAlign: 'center', fontSize: 'clamp(1.2rem, 3vw, 1.75rem)', color: '#333' }}>
               Patient Outreach over Time
             </h2>
             <div style={{ width: '100%', height: 'calc(100% - 4rem)' }}>

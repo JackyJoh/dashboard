@@ -116,30 +116,38 @@ const Dashboard: React.FC = () => {
 
   return (
     <Layout showHeader={true}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
         <Grid>
           <div className="card-white">
-            <div style={{ width: '100%', height: '100%' }}>
-              <h4>Insurance Care Gap Closure Over Time</h4>
-              <Chart id="careGapChart" data={gapsChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+            <div style={{ width: '100%', height: '100%', minHeight: '250px', display: 'flex', flexDirection: 'column' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)' }}>Insurance Care Gap Closure Over Time</h4>
+              <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                <Chart id="careGapChart" data={gapsChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+              </div>
             </div>
           </div>
           <div className="card-white">
-            <div style={{ width: '100%', height: '100%' }}>
-              <h4>Patient Outreach Over Time</h4>
-              <Chart id="outreachChart" data={outreachChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+            <div style={{ width: '100%', height: '100%', minHeight: '250px', display: 'flex', flexDirection: 'column' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)' }}>Patient Outreach Over Time</h4>
+              <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                <Chart id="outreachChart" data={outreachChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+              </div>
             </div>
           </div>
           <div className="card-white">
-            <div style={{ width: '100%', height: '100%' }}>
-              <h4>Risk Score Over Time</h4>
-              <Chart id="riskScoreChart" data={riskChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='line' />
+            <div style={{ width: '100%', height: '100%', minHeight: '250px', display: 'flex', flexDirection: 'column' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)' }}>Risk Score Over Time</h4>
+              <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                <Chart id="riskScoreChart" data={riskChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='line' />
+              </div>
             </div>
           </div>
           <div className="card-white">
-            <div style={{ width: '100%', height: '100%' }}>
-              <h4>Priority Metric Closures Over Time</h4>
-              <Chart id="metricGapsChart" data={memoMetricGapsLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line'/>
+            <div style={{ width: '100%', height: '100%', minHeight: '250px', display: 'flex', flexDirection: 'column' }}>
+              <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)' }}>Priority Metric Closures Over Time</h4>
+              <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+                <Chart id="metricGapsChart" data={memoMetricGapsLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='line'/>
+              </div>
             </div>
           </div>
         </Grid>
