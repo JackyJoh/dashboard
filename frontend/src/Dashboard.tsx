@@ -58,9 +58,6 @@ const Dashboard: React.FC = () => {
     },
   });
 
-  // Track earnings loading for the loading state (even though we don't use the data)
-  const earningsLoading = false;
-
   // Helper function to convert wide-format metric data to long format for charting
     const toLongFormat = (rows: metricData[]) => {
     const out: Array<{ date: string; metric: string; value: number }> = [];
