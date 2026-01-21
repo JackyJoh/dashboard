@@ -210,15 +210,12 @@ const PriorityGaps: React.FC = () => {
           
           {/* Right Panel: Stats/Metric Display */}
           <div className="gaps-top-row-item">
-            <div className="gaps-stats-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: '100%' }}>
-              <p className="gaps-stats-text" style={{ margin: '0.25rem', fontSize: 'clamp(0.9rem, 2.5vw, 1.125rem)' }}>Most Recent Metric Gap Data</p>
-                <div style={{ width: '100%', maxWidth: 600, height: 300, minHeight: 200, borderRadius: '8px', padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {processing ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '1.5rem', color: '#6366f1', fontWeight: '500' }}>Processing file...</div>
-                  ) : (
-                    <Chart data={memoRecentLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='bar' />
-                  )}
-                </div>
+            <div className="gaps-stats-container">
+              {processing ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '1.5rem', color: '#6366f1', fontWeight: '500' }}>Processing file...</div>
+              ) : (
+                <Chart data={memoRecentLong} xColumn="date" yColumn="value" groupColumn="metric" graphType='bar' />
+              )}
             </div>
           </div>
         </div>

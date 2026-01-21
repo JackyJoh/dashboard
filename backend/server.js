@@ -13,7 +13,10 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 // Initialize PostgreSQL connection pool
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
 });
 
 // Create express app   
@@ -214,40 +217,25 @@ app.get('/api/chart-data/priority-gaps', authenticateToken, async (req, res) => 
 
 // get recent priority gaps data
 app.get('/api/chart-data/priority-gaps/recent-data', authenticateToken, async (req, res) => {
-    let currentYear = new Date().getFullYear();
-    let currentMonth = new Date().getMonth() + 1;
-    let attempts = 0;
-    while (attempts < 12) {
-        try {
-            // Calculate next month for the upper bound
-            let nextMonth = currentMonth + 1;
-            let nextYear = currentYear;
-            if (nextMonth > 12) {
-                nextMonth = 1;
-                nextYear = currentYear + 1;
-            }
-
-            const query = `SELECT date, percentage, insurance FROM priority_gaps WHERE date >= $1 AND date < $2`;
-            const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-            const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
-            const result = await pool.query(query, [startDate, endDate]);
-            
-            if (result.rows.length > 0) {
-                return res.json(result.rows);
-            }
-            // No data? Go back a month
-            currentMonth--;
-            if (currentMonth < 1) {
-                currentMonth = 12;
-                currentYear--;
-            }
-            attempts++;
-        } catch (e) {
-            console.error('Server error:', e);
-            return res.status(500).json({ error: 'An unexpected error occurred' });
+    try {
+        const query = `
+            SELECT date, diabetes, blood_pressure, breast_cancer, colo_cancer
+            FROM priority_gaps 
+            WHERE date >= DATE_TRUNC('month', (
+                SELECT MAX(date) FROM priority_gaps
+            ))
+            ORDER BY date DESC
+        `;
+        const result = await pool.query(query);
+        
+        if (result.rows.length > 0) {
+            return res.json(result.rows);
         }
+        res.status(404).json({ error: 'No recent data found' });
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
     }
-    res.status(404).json({ error: 'No recent data found in the past year' });
 });
 
 // get risk score data
@@ -265,40 +253,25 @@ app.get('/api/chart-data/risk-score', authenticateToken, async (req, res) => {
 //get recent data for gaps
 // should get the most recent and valid months data
 app.get('/api/gaps/recent-data', authenticateToken, async (req, res) => {
-    let currentYear = new Date().getFullYear();
-    let currentMonth = new Date().getMonth() + 1;
-    let attempts = 0;
-    while (attempts < 12) {
-        try {
-            // Calculate next month for the upper bound
-            let nextMonth = currentMonth + 1;
-            let nextYear = currentYear;
-            if (nextMonth > 12) {
-                nextMonth = 1;
-                nextYear = currentYear + 1;
-            }
-
-            const query = `SELECT date, percentage, insurance FROM closure_percentage WHERE date >= $1 AND date < $2`;
-            const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-            const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
-            const result = await pool.query(query, [startDate, endDate]);
-            
-            if (result.rows.length > 0) {
-                return res.json(result.rows);
-            }
-            // No data? Go back a month
-            currentMonth--;
-            if (currentMonth < 1) {
-                currentMonth = 12;
-                currentYear--;
-            }
-            attempts++;
-        } catch (e) {
-            console.error('Server error:', e);
-            return res.status(500).json({ error: 'An unexpected error occurred' });
+    try {
+        const query = `
+            SELECT date, percentage, insurance 
+            FROM closure_percentage 
+            WHERE date >= DATE_TRUNC('month', (
+                SELECT MAX(date) FROM closure_percentage
+            ))
+            ORDER BY date DESC
+        `;
+        const result = await pool.query(query);
+        
+        if (result.rows.length > 0) {
+            return res.json(result.rows);
         }
+        res.status(404).json({ error: 'No recent data found' });
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
     }
-    res.status(404).json({ error: 'No recent data found in the past year' });
 });
 
 app.get('/api/chart-data', authenticateToken, async (req, res) => {
@@ -343,40 +316,25 @@ app.post('/api/gaps', authenticateToken, async (req, res) => {
 
 //get recent risk score data
 app.get('/api/chart-data/risk-score/recent-data', authenticateToken, async (req, res) => {
-    let currentYear = new Date().getFullYear();
-    let currentMonth = new Date().getMonth() + 1;
-    let attempts = 0;
-    while (attempts < 12) {
-        try {
-            // Calculate next month for the upper bound
-            let nextMonth = currentMonth + 1;
-            let nextYear = currentYear;
-            if (nextMonth > 12) {
-                nextMonth = 1;
-                nextYear = currentYear + 1;
-            }
-
-            const query = `SELECT date, percentage, insurance FROM risk_closure WHERE date >= $1 AND date < $2`;
-            const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-            const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
-            const result = await pool.query(query, [startDate, endDate]);
-            
-            if (result.rows.length > 0) {
-                return res.json(result.rows);
-            }
-            // No data? Go back a month
-            currentMonth--;
-            if (currentMonth < 1) {
-                currentMonth = 12;
-                currentYear--;
-            }
-            attempts++;
-        } catch (e) {
-            console.error('Server error:', e);
-            return res.status(500).json({ error: 'An unexpected error occurred' });
+    try {
+        const query = `
+            SELECT date, percentage, insurance 
+            FROM risk_closure 
+            WHERE date >= DATE_TRUNC('month', (
+                SELECT MAX(date) FROM risk_closure
+            ))
+            ORDER BY date DESC
+        `;
+        const result = await pool.query(query);
+        
+        if (result.rows.length > 0) {
+            return res.json(result.rows);
         }
+        res.status(404).json({ error: 'No recent data found' });
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
     }
-    res.status(404).json({ error: 'No recent data found in the past year' });
 });
 
 //post new risk score data
@@ -448,40 +406,25 @@ app.get('/api/chart-data/outreach', authenticateToken, async (req, res) => {
 
 // get recent outreach data
 app.get('/api/chart-data/outreach/recent-data', authenticateToken, async (req, res) => {
-    let currentYear = new Date().getFullYear();
-    let currentMonth = new Date().getMonth() + 1;
-    let attempts = 0;
-    while (attempts < 12) {
-        try {
-            // Calculate next month for the upper bound
-            let nextMonth = currentMonth + 1;
-            let nextYear = currentYear;
-            if (nextMonth > 12) {
-                nextMonth = 1;
-                nextYear = currentYear + 1;
-            }
-
-            const query = `SELECT date, percentage, insurance FROM pt_outreach WHERE date >= $1 AND date < $2`;
-            const startDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-01`;
-            const endDate = `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`;
-            const result = await pool.query(query, [startDate, endDate]);
-            
-            if (result.rows.length > 0) {
-                return res.json(result.rows);
-            }
-            // No data? Go back a month
-            currentMonth--;
-            if (currentMonth < 1) {
-                currentMonth = 12;
-                currentYear--;
-            }
-            attempts++;
-        } catch (e) {
-            console.error('Server error:', e);
-            return res.status(500).json({ error: 'An unexpected error occurred' });
+    try {
+        const query = `
+            SELECT date, percentage, insurance 
+            FROM pt_outreach 
+            WHERE date >= DATE_TRUNC('month', (
+                SELECT MAX(date) FROM pt_outreach
+            ))
+            ORDER BY date DESC
+        `;
+        const result = await pool.query(query);
+        
+        if (result.rows.length > 0) {
+            return res.json(result.rows);
         }
+        res.status(404).json({ error: 'No recent data found' });
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
     }
-    res.status(404).json({ error: 'No recent data found in the past year' });
 });
 
 //Login endpoint
