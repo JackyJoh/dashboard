@@ -39,11 +39,14 @@ const PriorityGaps: React.FC = () => {
         const response = await fetchWithAuth('/api/chart-data/priority-gaps', {}, navigate);
         const data = await response.json();
         
-        // Set both chartData and recentData from single fetch
-        setChartData(data);
-        setRecentData(Array.isArray(data) ? data.slice(-1) : []);
+        // Set both chartData and recentData from single fetch with array validation
+        const validData = Array.isArray(data) ? data : [];
+        setChartData(validData);
+        setRecentData(validData.slice(-1));
       } catch (error) {
         console.error('Failed to fetch chart data:', error);
+        setChartData([]);
+        setRecentData([]);
         setError('Failed to load chart data.');
       } finally {
         setLoading(false);
@@ -229,7 +232,7 @@ const PriorityGaps: React.FC = () => {
               <img src="/fullscreen.png" alt="Fullscreen" style={{ transform: 'scale(1.7)' }} />
             </button>
             <CSVLink 
-              data={chartData}
+              data={Array.isArray(chartData) && chartData.length > 0 ? chartData : []}
               filename={"priority_metrics_data.csv"}
               className="small-btn"
               aria-label="Download CSV"

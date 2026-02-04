@@ -30,7 +30,8 @@ const Dashboard: React.FC = () => {
     queryKey: ['chart-data', 'gaps'],
     queryFn: async () => {
       const response = await fetchWithAuth('/api/chart-data', {}, navigate);
-      return response.json() as Promise<ChartData[]>;
+      const result = await response.json();
+      return Array.isArray(result) ? result : [];
     },
   });
 
@@ -38,7 +39,8 @@ const Dashboard: React.FC = () => {
     queryKey: ['chart-data', 'risk-score'],
     queryFn: async () => {
       const response = await fetchWithAuth('/api/chart-data/risk-score', {}, navigate);
-      return response.json() as Promise<ChartData[]>;
+      const result = await response.json();
+      return Array.isArray(result) ? result : [];
     },
   });
 
@@ -46,7 +48,8 @@ const Dashboard: React.FC = () => {
     queryKey: ['chart-data', 'outreach'],
     queryFn: async () => {
       const response = await fetchWithAuth('/api/chart-data/outreach', {}, navigate);
-      return response.json() as Promise<ChartData[]>;
+      const result = await response.json();
+      return Array.isArray(result) ? result : [];
     },
   });
 
@@ -54,7 +57,8 @@ const Dashboard: React.FC = () => {
     queryKey: ['chart-data', 'priority-gaps'],
     queryFn: async () => {
       const response = await fetchWithAuth('/api/chart-data/priority-gaps', {}, navigate);
-      return response.json() as Promise<metricData[]>;
+      const result = await response.json();
+      return Array.isArray(result) ? result : [];
     },
   });
 

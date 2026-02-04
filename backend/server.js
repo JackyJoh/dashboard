@@ -1,5 +1,6 @@
 const express = require('express');
-const { Pool } = require('pg');
+const { Pool, neonConfig } = require('@neondatabase/serverless');
+const ws = require('ws');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const cors = require('cors');
@@ -9,14 +10,13 @@ const fs = require('fs');
 const Lambda = require('aws-sdk/clients/lambda');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
+// Configure Neon for production (WebSocket polyfill)
+neonConfig.webSocketConstructor = ws;
+
 // Express server for NCH dashboard API
 // Initialize PostgreSQL connection pool
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
 });
 
 // Create express app   
@@ -276,7 +276,7 @@ app.get('/api/gaps/recent-data', authenticateToken, async (req, res) => {
 
 app.get('/api/chart-data', authenticateToken, async (req, res) => {
     try {
-        const query = `SELECT date, percentage, insurance FROM closure_percentage ORDER BY date ASC`;
+        const query = `SELECT date, ROUND(percentage::numeric, 2) as percentage, insurance FROM closure_percentage ORDER BY date ASC`;
         const result = await pool.query(query);
         res.json(result.rows);
     } catch (e) {
@@ -395,7 +395,7 @@ app.post('/api/outreach', authenticateToken, async (req, res) => {
 //get outreach data
 app.get('/api/chart-data/outreach', authenticateToken, async (req, res) => {
     try {
-        const query = `SELECT date, percentage, insurance FROM pt_outreach ORDER BY date ASC`;
+        const query = `SELECT date, ROUND(percentage::numeric, 2) as percentage, insurance FROM pt_outreach ORDER BY date ASC`;
         const result = await pool.query(query);
         res.json(result.rows);
     } catch (e) {
@@ -408,7 +408,7 @@ app.get('/api/chart-data/outreach', authenticateToken, async (req, res) => {
 app.get('/api/chart-data/outreach/recent-data', authenticateToken, async (req, res) => {
     try {
         const query = `
-            SELECT date, percentage, insurance 
+            SELECT date, ROUND(percentage::numeric, 2) as percentage, insurance 
             FROM pt_outreach 
             WHERE date >= DATE_TRUNC('month', (
                 SELECT MAX(date) FROM pt_outreach
@@ -441,7 +441,14 @@ app.post('/api/login', (req, res) => {
 app.get('/api/table-data/:tableName', authenticateToken, async (req, res) => {
     const { tableName } = req.params;
     let orderBy = (tableName === 'closure_percentage' || tableName === 'risk_closure') ? 'date DESC' : 'id DESC';
-    const query = `SELECT * FROM ${tableName} ORDER BY ${orderBy}`;
+    
+    let query;
+    if (tableName === 'closure_percentage' || tableName === 'risk_closure' || tableName === 'pt_outreach') {
+        query = `SELECT id, ROUND(percentage::numeric, 2) as percentage, date, insurance FROM ${tableName} ORDER BY ${orderBy}`;
+    } else {
+        query = `SELECT * FROM ${tableName} ORDER BY ${orderBy}`;
+    }
+    
     try {
         const result = await pool.query(query);
         res.json(result.rows);

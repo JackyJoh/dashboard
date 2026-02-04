@@ -29,7 +29,7 @@ const Chart: React.FC<ChartProps> = ({ data, graphType, xColumn, yColumn, groupC
   const chartInstanceRef = useRef<ChartJS | null>(null);
 
   useEffect(() => {
-    if (!canvasRef.current || !data || data.length === 0) {
+    if (!canvasRef.current || !data || !Array.isArray(data) || data.length === 0) {
       return;
     }
 

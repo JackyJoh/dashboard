@@ -43,11 +43,13 @@ const Outreach: React.FC = () => {
       const allData = await allDataResponse.json();
       const recentData = await recentDataResponse.json();
       
-      // Set both states together
-      setChartData(allData);
-      setRecentData(recentData);
+      // Set both states together with array validation
+      setChartData(Array.isArray(allData) ? allData : []);
+      setRecentData(Array.isArray(recentData) ? recentData : []);
     } catch (error) {
       console.error('Failed to fetch outreach chart data:', error);
+      setChartData([]);
+      setRecentData([]);
       setError('Failed to load outreach chart data.');
     } finally {
       setLoading(false);
@@ -171,7 +173,7 @@ const Outreach: React.FC = () => {
               <img src="/fullscreen.png" alt="Fullscreen" style={{ transform: 'scale(1.7)' }} />
             </button>
             <CSVLink 
-              data={chartData}
+              data={Array.isArray(chartData) && chartData.length > 0 ? chartData : []}
               filename={"patient_outreach_data.csv"}
               className="small-btn"
               aria-label="Download CSV"

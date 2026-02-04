@@ -37,17 +37,19 @@ const RiskScore: React.FC = () => {
     try {
       const response = await fetchWithAuth('/api/chart-data/risk-score', {}, navigate);
       const data = await response.json();
-      setChartData(data);
+      setChartData(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch chart data:', error);
+      setChartData([]);
       setError('Failed to load chart data.');
     }
     try {
       const response = await fetchWithAuth('/api/chart-data/risk-score/recent-data', {}, navigate);
       const data = await response.json();
-      setRecentData(data);
+      setRecentData(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch recent data:', error);
+      setRecentData([]);
       setError('Failed to load recent data.');
     } finally {
       setLoading(false);
@@ -149,7 +151,7 @@ const RiskScore: React.FC = () => {
               <img src="/fullscreen.png" alt="Fullscreen" style={{ transform: 'scale(1.7)' }} />
             </button>
             <CSVLink 
-              data={chartData}
+              data={Array.isArray(chartData) && chartData.length > 0 ? chartData : []}
               filename={"risk_score_data.csv"}
               className="small-btn"
               aria-label="Download CSV"
