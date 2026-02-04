@@ -7,11 +7,11 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
 // Define a type for the data you expect from the API.
-interface ChartData {
-  date: string;
-  percentage: number;
-  insurance: string;
-}
+// interface ChartData {
+//   date: string;
+//   percentage: number;
+//   insurance: string;
+// }
 // earnings data types and state removed - not used in current UI
 
 interface metricData {
