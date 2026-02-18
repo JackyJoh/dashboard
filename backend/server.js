@@ -440,18 +440,66 @@ app.post('/api/login', (req, res) => {
 //fetch all data for the table view
 app.get('/api/table-data/:tableName', authenticateToken, async (req, res) => {
     const { tableName } = req.params;
+    const allowedTables = ['closure_percentage', 'risk_closure', 'pt_outreach', 'priority_gaps'];
+    if (!allowedTables.includes(tableName)) {
+        return res.status(400).json({ error: 'Invalid table name' });
+    }
+
     let orderBy = (tableName === 'closure_percentage' || tableName === 'risk_closure') ? 'date DESC' : 'id DESC';
-    
+
     let query;
-    if (tableName === 'closure_percentage' || tableName === 'risk_closure' || tableName === 'pt_outreach') {
+    if (tableName === 'closure_percentage' || tableName === 'pt_outreach') {
+        query = `SELECT id, numerator, denominator, ROUND(percentage::numeric, 2) as percentage, date, insurance FROM ${tableName} ORDER BY ${orderBy}`;
+    } else if (tableName === 'risk_closure') {
         query = `SELECT id, ROUND(percentage::numeric, 2) as percentage, date, insurance FROM ${tableName} ORDER BY ${orderBy}`;
     } else {
         query = `SELECT * FROM ${tableName} ORDER BY ${orderBy}`;
     }
-    
+
     try {
         const result = await pool.query(query);
         res.json(result.rows);
+    } catch (e) {
+        console.error('Server error:', e);
+        res.status(500).json({ error: 'An unexpected error occurred' });
+    }
+});
+
+//update a row in the table
+app.put('/api/table-data/:tableName/:id', authenticateToken, async (req, res) => {
+    const { tableName, id } = req.params;
+    const allowedTables = ['closure_percentage', 'risk_closure', 'pt_outreach', 'priority_gaps'];
+    if (!allowedTables.includes(tableName)) {
+        return res.status(400).json({ error: 'Invalid table name' });
+    }
+
+    try {
+        let query, values;
+
+        if (tableName === 'closure_percentage' || tableName === 'pt_outreach') {
+            const { numerator, denominator, date, insurance } = req.body;
+            const num = parseInt(numerator, 10);
+            const den = parseInt(denominator, 10);
+            if (isNaN(num) || isNaN(den) || den === 0) {
+                return res.status(400).json({ error: 'Invalid numerator/denominator values' });
+            }
+            query = `UPDATE ${tableName} SET numerator=$1, denominator=$2, date=$3, insurance=$4 WHERE id=$5 RETURNING *`;
+            values = [num, den, date, insurance, id];
+        } else if (tableName === 'risk_closure') {
+            const { percentage, date, insurance } = req.body;
+            query = `UPDATE risk_closure SET percentage=$1, date=$2, insurance=$3 WHERE id=$4 RETURNING *`;
+            values = [percentage, date, insurance, id];
+        } else if (tableName === 'priority_gaps') {
+            const { date, diabetes, blood_pressure, breast_cancer, colo_cancer } = req.body;
+            query = `UPDATE priority_gaps SET date=$1, diabetes=$2, blood_pressure=$3, breast_cancer=$4, colo_cancer=$5 WHERE id=$6 RETURNING *`;
+            values = [date, diabetes, blood_pressure, breast_cancer, colo_cancer, id];
+        }
+
+        const result = await pool.query(query, values);
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Record not found' });
+        }
+        res.json(result.rows[0]);
     } catch (e) {
         console.error('Server error:', e);
         res.status(500).json({ error: 'An unexpected error occurred' });

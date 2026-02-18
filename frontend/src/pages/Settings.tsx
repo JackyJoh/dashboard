@@ -36,7 +36,7 @@ const Settings: React.FC = () => {
   const handleDelete = async (id: number) => {
     // Show confirmation dialog
     const confirmed = window.confirm('Are you sure you want to delete this record? This action cannot be undone.');
-    
+
     if (!confirmed) {
       return; // User cancelled, don't delete
     }
@@ -47,6 +47,27 @@ const Settings: React.FC = () => {
     } catch (e) {
       console.error(e);
       setError('Failed to delete record.');
+    }
+  };
+
+  const handleEdit = async (id: number, updatedRow: Record<string, any>) => {
+    try {
+      const response = await fetchWithAuth(`/api/table-data/${selectedTable}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedRow),
+      }, navigate);
+
+      if (!response.ok) {
+        const err = await response.json();
+        setError(err.error || 'Failed to update record.');
+        return;
+      }
+
+      await fetchTableData();
+    } catch (e) {
+      console.error(e);
+      setError('Failed to update record.');
     }
   };
 
@@ -63,15 +84,18 @@ const Settings: React.FC = () => {
       </Layout>
     );
   }
-  if (error) {
-    return <Layout showHeader={true}><div>Error: {error}</div></Layout>;
-  }
   
 
 
   return (
   <Layout showHeader={true}>
     <div className="settings-page-container">
+      {error && (
+        <div className="settings-error-banner">
+          {error}
+          <button className="settings-error-dismiss" onClick={() => setError(null)}>✕</button>
+        </div>
+      )}
       <div className="settings-card">
         <h3 className="settings-subtitle">Manage data tables and configurations</h3>
         <div className="table-selector-container">
@@ -82,7 +106,7 @@ const Settings: React.FC = () => {
             id="table-selector" 
             className="table-select-styled"
             value={selectedTable}
-            onChange={(e) => setSelectedTable(e.target.value)}
+            onChange={(e) => { setSelectedTable(e.target.value); setError(null); }}
           >
             <option value="closure_percentage">Insurance Closure Data</option>
             <option value="risk_closure">Risk Closure Data</option>
@@ -100,7 +124,7 @@ const Settings: React.FC = () => {
           Table Data: {selectedTable.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
         </h2>
         <p className="settings-card-description">
-          Below is the data for the selected table. You can remove individual rows using the delete button.
+          Below is the data for the selected table. Use the Edit button to modify a row inline, or Delete to remove it.
         </p>
 
         {/* Visual spacer outside the scrollable area so the header can stick at top:0 */}
@@ -116,7 +140,7 @@ const Settings: React.FC = () => {
                 <th>Actions</th>
               </tr>
             </thead>
-            <TableView data={tableData} onDelete={handleDelete} headers={headers} />
+            <TableView data={tableData} onDelete={handleDelete} onEdit={handleEdit} headers={headers} />
           </table>
         </div>
       </div>
