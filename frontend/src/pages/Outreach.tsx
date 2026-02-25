@@ -6,6 +6,10 @@ import Chart from '../Chart';
 import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../api';
 import { CSVLink } from 'react-csv';
+import usePersistedState from '../usePersistedState';
+
+const formatLastUpdated = (d: Date) =>
+  d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 
 interface ChartDataRecord {
   date: string;
@@ -29,7 +33,8 @@ const Outreach: React.FC = () => {
   const [resetKey, setResetKey] = useState(0);
   const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [graphType, setGraphType] = useState<typeof graphsTypeOptions[number]>('line');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [graphType, setGraphType] = usePersistedState<typeof graphsTypeOptions[number]>('nch-graph-type-outreach', 'line');
   const navigate = useNavigate();
 
   const fetchChartData = async () => {
@@ -46,6 +51,7 @@ const Outreach: React.FC = () => {
       // Set both states together with array validation
       setChartData(Array.isArray(allData) ? allData : []);
       setRecentData(Array.isArray(recentData) ? recentData : []);
+      setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to fetch outreach chart data:', error);
       setChartData([]);
@@ -58,11 +64,8 @@ const Outreach: React.FC = () => {
 
   //rotate graph type
   const rotateGraphType = () => {
-    setGraphType((prevType) => {
-      const currentIndex = graphsTypeOptions.indexOf(prevType);
-      const nextIndex = (currentIndex + 1) % graphsTypeOptions.length;
-      return graphsTypeOptions[nextIndex];
-    });
+    const nextIndex = (graphsTypeOptions.indexOf(graphType) + 1) % graphsTypeOptions.length;
+    setGraphType(graphsTypeOptions[nextIndex]);
   }
 
   const handleFormSubmit = async (formData: Record<string, string>) => {
@@ -165,14 +168,14 @@ const Outreach: React.FC = () => {
         </div>
         <div className="gaps-chart-full-width-container">
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
-            <button 
+            <button
               className="small-btn"
               aria-label="Fullscreen"
               onClick={() => setIsFullscreen(true)}
             >
               <img src="/fullscreen.png" alt="Fullscreen" style={{ transform: 'scale(1.7)' }} />
             </button>
-            <CSVLink 
+            <CSVLink
               data={Array.isArray(chartData) && chartData.length > 0 ? chartData : []}
               filename={"patient_outreach_data.csv"}
               className="small-btn"
@@ -180,7 +183,7 @@ const Outreach: React.FC = () => {
             >
               <img src="/export.png" alt="Export" />
             </CSVLink>
-            <button 
+            <button
               className="small-btn"
               aria-label="Change graph type"
               onClick={rotateGraphType}
@@ -188,6 +191,7 @@ const Outreach: React.FC = () => {
               <img src="/73450.png" alt="Change graph type" />
             </button>
           </div>
+          {lastUpdated && <p className="chart-last-updated">Updated {formatLastUpdated(lastUpdated)}</p>}
           <div style={{ width: '100%', height: 'clamp(300px, 50vh, 500px)', minHeight: 250 }}>
             <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
           </div>

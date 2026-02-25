@@ -3,9 +3,13 @@ import Layout from '../components/Layout';
 import DataEntryForm from '../components/DataEntryForm';
 import type { FormField } from '../components/DataEntryForm';
 import Chart from '../Chart';
-import { fetchWithAuth } from '../api'; // Import the new utility
+import { fetchWithAuth } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { CSVLink } from 'react-csv';
+import usePersistedState from '../usePersistedState';
+
+const formatLastUpdated = (d: Date) =>
+  d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 
 interface ChartDataRecord {
   date: string;
@@ -26,10 +30,11 @@ const RiskScore: React.FC = () => {
   const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [resetKey, setResetKey] = useState(0); // New state to control the form reset
+  const [resetKey, setResetKey] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const navigate = useNavigate();
-  const [graphType, setGraphType] = useState<typeof graphsTypeOptions[number]>('line');
+  const [graphType, setGraphType] = usePersistedState<typeof graphsTypeOptions[number]>('nch-graph-type-risk', 'line');
 
 
   //get risk score data
@@ -47,22 +52,20 @@ const RiskScore: React.FC = () => {
       const response = await fetchWithAuth('/api/chart-data/risk-score/recent-data', {}, navigate);
       const data = await response.json();
       setRecentData(Array.isArray(data) ? data : []);
+      setLastUpdated(new Date());
     } catch (error) {
       console.error('Failed to fetch recent data:', error);
       setRecentData([]);
       setError('Failed to load recent data.');
     } finally {
       setLoading(false);
-  };
+    }
   };
 
   //rotate graph type
   const rotateGraphType = () => {
-    setGraphType((prevType) => {
-      const currentIndex = graphsTypeOptions.indexOf(prevType);
-      const nextIndex = (currentIndex + 1) % graphsTypeOptions.length;
-      return graphsTypeOptions[nextIndex];
-    });
+    const nextIndex = (graphsTypeOptions.indexOf(graphType) + 1) % graphsTypeOptions.length;
+    setGraphType(graphsTypeOptions[nextIndex]);
   }
 
   const handleFormSubmit = async (formData: Record<string, string>) => {
@@ -143,14 +146,14 @@ const RiskScore: React.FC = () => {
         </div>
         <div className="gaps-chart-full-width-container">
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
-            <button 
+            <button
               className="small-btn"
               aria-label="Fullscreen"
               onClick={() => setIsFullscreen(true)}
             >
               <img src="/fullscreen.png" alt="Fullscreen" style={{ transform: 'scale(1.7)' }} />
             </button>
-            <CSVLink 
+            <CSVLink
               data={Array.isArray(chartData) && chartData.length > 0 ? chartData : []}
               filename={"risk_score_data.csv"}
               className="small-btn"
@@ -158,14 +161,15 @@ const RiskScore: React.FC = () => {
             >
               <img src="/export.png" alt="Export" />
             </CSVLink>
-            <button 
+            <button
               className="small-btn"
-              aria-label="Third button"
+              aria-label="Change graph type"
               onClick={rotateGraphType}
             >
-              <img src="/73450.png" alt="Third button" />
+              <img src="/73450.png" alt="Change graph type" />
             </button>
           </div>
+          {lastUpdated && <p className="chart-last-updated">Updated {formatLastUpdated(lastUpdated)}</p>}
           <div style={{ width: '100%', height: 'clamp(300px, 50vh, 500px)', minHeight: 250 }}>
             <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
           </div>

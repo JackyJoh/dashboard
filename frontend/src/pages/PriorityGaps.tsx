@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Layout from '../components/Layout';
 import Chart from '../Chart';
-import { fetchWithAuth } from '../api'; // Import the new utility
+import { fetchWithAuth } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { CSVLink } from 'react-csv';
+import usePersistedState from '../usePersistedState';
+
+const formatLastUpdated = (d: Date) =>
+  d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 
 interface ChartDataRecord {
   date: string;
@@ -25,7 +29,8 @@ const PriorityGaps: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [graphType, setGraphType] = useState<typeof graphsTypeOptions[number]>('line');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [graphType, setGraphType] = usePersistedState<typeof graphsTypeOptions[number]>('nch-graph-type-priority', 'line');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -43,6 +48,7 @@ const PriorityGaps: React.FC = () => {
         const validData = Array.isArray(data) ? data : [];
         setChartData(validData);
         setRecentData(validData.slice(-1));
+        setLastUpdated(new Date());
       } catch (error) {
         console.error('Failed to fetch chart data:', error);
         setChartData([]);
@@ -55,11 +61,8 @@ const PriorityGaps: React.FC = () => {
 
   //rotate graph type
   const rotateGraphType = () => {
-    setGraphType((prevType) => {
-      const currentIndex = graphsTypeOptions.indexOf(prevType);
-      const nextIndex = (currentIndex + 1) % graphsTypeOptions.length;
-      return graphsTypeOptions[nextIndex];
-    });
+    const nextIndex = (graphsTypeOptions.indexOf(graphType) + 1) % graphsTypeOptions.length;
+    setGraphType(graphsTypeOptions[nextIndex]);
   }
 
   const handleSubmit = () => {
@@ -224,14 +227,14 @@ const PriorityGaps: React.FC = () => {
         </div>
         <div className="gaps-chart-full-width-container">
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
-            <button 
+            <button
               className="small-btn"
               aria-label="Fullscreen"
               onClick={() => setIsFullscreen(true)}
             >
               <img src="/fullscreen.png" alt="Fullscreen" style={{ transform: 'scale(1.7)' }} />
             </button>
-            <CSVLink 
+            <CSVLink
               data={Array.isArray(chartData) && chartData.length > 0 ? chartData : []}
               filename={"priority_metrics_data.csv"}
               className="small-btn"
@@ -239,7 +242,7 @@ const PriorityGaps: React.FC = () => {
             >
               <img src="/export.png" alt="Export" />
             </CSVLink>
-            <button 
+            <button
               className="small-btn"
               aria-label="Change graph type"
               onClick={rotateGraphType}
@@ -247,6 +250,7 @@ const PriorityGaps: React.FC = () => {
               <img src="/73450.png" alt="Change graph type" />
             </button>
           </div>
+          {lastUpdated && <p className="chart-last-updated">Updated {formatLastUpdated(lastUpdated)}</p>}
           <div style={{ width: '100%', height: 'clamp(300px, 50vh, 500px)', minHeight: 250 }}>
             {processing ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '2rem', color: '#6366f1', fontWeight: '500' }}>Processing file...</div>

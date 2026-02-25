@@ -818,15 +818,23 @@ html, body {
   padding-bottom: 1rem;
 }
 
-/* Copyright text in dashboard */
-.dashboard-copyright {
+/* Footer row in dashboard */
+.dashboard-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background-color: var(--bg);
+  flex-shrink: 0;
+}
+
+.dashboard-copyright-text {
   text-align: center;
   color: #718096;
   font-size: clamp(0.7rem, 1.5vw, 0.875rem);
   font-weight: 400;
-  padding: 0.5rem;
-  background-color: var(--bg);
-  flex-shrink: 0;
 }
 
 
@@ -994,6 +1002,13 @@ html, body {
 
 .delete-button:hover {
   background-color: #dc2626;
+}
+
+.chart-last-updated {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0 0 6px 0;
+  text-align: right;
 }
 
 .settings-error-banner {

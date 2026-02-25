@@ -1,4 +1,7 @@
 import React, { useMemo } from 'react';
+
+const formatLastUpdated = (d: Date) =>
+  d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
 import Chart from './Chart';
 import Layout from './components/Layout';
 import Grid from './components/Grid';
@@ -26,7 +29,7 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   // Use React Query to fetch and cache all dashboard data
-  const { data: gapsChartData = [], isLoading: gapsLoading } = useQuery({
+  const { data: gapsChartData = [], isLoading: gapsLoading, dataUpdatedAt: gapsUpdatedAt } = useQuery({
     queryKey: ['chart-data', 'gaps'],
     queryFn: async () => {
       const response = await fetchWithAuth('/api/chart-data', {}, navigate);
@@ -35,7 +38,7 @@ const Dashboard: React.FC = () => {
     },
   });
 
-  const { data: riskChartData = [], isLoading: riskLoading } = useQuery({
+  const { data: riskChartData = [], isLoading: riskLoading, dataUpdatedAt: riskUpdatedAt } = useQuery({
     queryKey: ['chart-data', 'risk-score'],
     queryFn: async () => {
       const response = await fetchWithAuth('/api/chart-data/risk-score', {}, navigate);
@@ -44,7 +47,7 @@ const Dashboard: React.FC = () => {
     },
   });
 
-  const { data: outreachChartData = [], isLoading: outreachLoading } = useQuery({
+  const { data: outreachChartData = [], isLoading: outreachLoading, dataUpdatedAt: outreachUpdatedAt } = useQuery({
     queryKey: ['chart-data', 'outreach'],
     queryFn: async () => {
       const response = await fetchWithAuth('/api/chart-data/outreach', {}, navigate);
@@ -53,7 +56,7 @@ const Dashboard: React.FC = () => {
     },
   });
 
-  const { data: metricGapsData = [], isLoading: metricGapsLoading } = useQuery({
+  const { data: metricGapsData = [], isLoading: metricGapsLoading, dataUpdatedAt: metricGapsUpdatedAt } = useQuery({
     queryKey: ['chart-data', 'priority-gaps'],
     queryFn: async () => {
       const response = await fetchWithAuth('/api/chart-data/priority-gaps', {}, navigate);
@@ -77,6 +80,9 @@ const Dashboard: React.FC = () => {
   };
 
   const memoMetricGapsLong = useMemo(() => toLongFormat(metricGapsData), [metricGapsData]);
+
+  const lastUpdatedMs = Math.max(gapsUpdatedAt, riskUpdatedAt, outreachUpdatedAt, metricGapsUpdatedAt);
+  const lastUpdated = lastUpdatedMs > 0 ? new Date(lastUpdatedMs) : null;
 
   // Show loading state while any query is loading
   if (gapsLoading || riskLoading || outreachLoading || metricGapsLoading) {
@@ -128,8 +134,13 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </Grid>
-        <div className="dashboard-copyright">
-          © {new Date().getFullYear()} Naples Comprehensive Health. All rights reserved.
+        <div className="dashboard-footer">
+          {lastUpdated && (
+            <span className="chart-last-updated" style={{ marginRight: '1.5rem' }}>
+              Updated {formatLastUpdated(lastUpdated)}
+            </span>
+          )}
+          <span className="dashboard-copyright-text">© {new Date().getFullYear()} Naples Comprehensive Health. All rights reserved.</span>
         </div>
       </div>
     </Layout>
