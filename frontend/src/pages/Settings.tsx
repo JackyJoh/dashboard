@@ -75,6 +75,12 @@ const Settings: React.FC = () => {
     fetchTableData();
   }, [selectedTable]);
 
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
+
   if (loading) {
     return (
       <Layout showHeader={true}>

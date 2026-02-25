@@ -14,14 +14,15 @@ export interface FormField {
 interface DataEntryFormProps {
   title: string;
   fields: FormField[];
-  onSubmit: (formData: Record<string, string>) => void;
-  resetKey: number; // New prop for resetting the form
+  onSubmit: (formData: Record<string, string>) => Promise<void> | void;
+  resetKey: number;
 }
 
 const DataEntryForm: React.FC<DataEntryFormProps> = ({ title, fields, onSubmit, resetKey }) => {
   const [formData, setFormData] = useState<Record<string, string>>(
     fields.reduce((acc, field) => ({ ...acc, [field.name]: '' }), {})
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // This useEffect hook watches the resetKey prop
   useEffect(() => {
@@ -34,9 +35,15 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ title, fields, onSubmit, 
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -77,8 +84,9 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ title, fields, onSubmit, 
       <button
         type="submit"
         className="form-button"
+        disabled={isSubmitting}
       >
-        Add Entry
+        {isSubmitting ? 'Saving...' : 'Add Entry'}
       </button>
     </form>
   </div>

@@ -143,9 +143,15 @@ const PriorityGaps: React.FC = () => {
   const memoChartLong = useMemo(() => toLongFormat(chartData), [chartData]);
   const memoRecentLong = useMemo(() => toLongFormat(recentData), [recentData]);
 
-   useEffect(() => {
+  useEffect(() => {
     fetchChartData();
   }, []);
+
+  useEffect(() => {
+    if (!error) return;
+    const timer = setTimeout(() => setError(null), 5000);
+    return () => clearTimeout(timer);
+  }, [error]);
 
   if (loading) {
     return (
@@ -206,8 +212,8 @@ const PriorityGaps: React.FC = () => {
                   />
                 </div>
 
-                <button onClick={handleSubmit} className="form-button">
-                  Submit
+                <button onClick={handleSubmit} className="form-button" disabled={processing}>
+                  {processing ? 'Processing...' : 'Submit'}
                 </button>
               </div>
 
