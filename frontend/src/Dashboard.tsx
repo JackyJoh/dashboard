@@ -9,6 +9,44 @@ import { fetchWithAuth } from './api';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 
+function getMonthAvg(
+  data: any[],
+  getValue: (row: any) => number
+): { current: number | null; prev: number | null } {
+  if (!data.length) return { current: null, prev: null };
+  const maxTime = Math.max(...data.map(d => new Date(d.date).getTime()));
+  const maxDate = new Date(maxTime);
+  const curMonth = maxDate.getMonth();
+  const curYear = maxDate.getFullYear();
+  const prevMonth = curMonth === 0 ? 11 : curMonth - 1;
+  const prevYear = curMonth === 0 ? curYear - 1 : curYear;
+  const curEntries = data.filter(d => {
+    const dt = new Date(d.date);
+    return dt.getMonth() === curMonth && dt.getFullYear() === curYear;
+  });
+  const prevEntries = data.filter(d => {
+    const dt = new Date(d.date);
+    return dt.getMonth() === prevMonth && dt.getFullYear() === prevYear;
+  });
+  const avg = (arr: any[]) =>
+    arr.length ? arr.reduce((s, d) => s + getValue(d), 0) / arr.length : null;
+  return { current: avg(curEntries), prev: avg(prevEntries) };
+}
+
+function StatDelta({ current, prev }: { current: number | null; prev: number | null }) {
+  if (current === null) return <span className="stat-card-delta neutral">No data</span>;
+  if (prev === null) return <span className="stat-card-delta neutral">No prior data</span>;
+  const delta = current - prev;
+  if (Math.abs(delta) < 0.05) return <span className="stat-card-delta neutral">No change</span>;
+  const dir = delta > 0 ? 'up' : 'down';
+  const arrow = delta > 0 ? '↑' : '↓';
+  return (
+    <span className={`stat-card-delta ${dir}`}>
+      {arrow} {Math.abs(delta).toFixed(1)} from last month
+    </span>
+  );
+}
+
 // Define a type for the data you expect from the API.
 // interface ChartData {
 //   date: string;
@@ -81,6 +119,16 @@ const Dashboard: React.FC = () => {
 
   const memoMetricGapsLong = useMemo(() => toLongFormat(metricGapsData), [metricGapsData]);
 
+  const gapStats = useMemo(() => getMonthAvg(gapsChartData, d => Number(d.percentage)), [gapsChartData]);
+  const outreachStats = useMemo(() => getMonthAvg(outreachChartData, d => Number(d.percentage)), [outreachChartData]);
+  const riskStats = useMemo(() => getMonthAvg(riskChartData, d => Number(d.percentage)), [riskChartData]);
+  const priorityMetrics = useMemo(() => [
+    { label: 'Diabetes', ...getMonthAvg(metricGapsData, d => Number(d.diabetes)) },
+    { label: 'Blood Pressure', ...getMonthAvg(metricGapsData, d => Number(d.blood_pressure)) },
+    { label: 'Breast Cancer', ...getMonthAvg(metricGapsData, d => Number(d.breast_cancer)) },
+    { label: 'Colorectal', ...getMonthAvg(metricGapsData, d => Number(d.colo_cancer)) },
+  ], [metricGapsData]);
+
   const lastUpdatedMs = Math.max(gapsUpdatedAt, riskUpdatedAt, outreachUpdatedAt, metricGapsUpdatedAt);
   const lastUpdated = lastUpdatedMs > 0 ? new Date(lastUpdatedMs) : null;
 
@@ -97,9 +145,44 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  const pctStats = [
+    { label: 'Care Gap Closure', ...gapStats },
+    { label: 'Patient Outreach', ...outreachStats },
+    { label: 'Risk Score', ...riskStats },
+  ];
+
   return (
     <Layout showHeader={true}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', overflow: 'hidden' }}>
+        <div className="stats-row">
+          <span className="stats-row-header">Current month averages</span>
+          {pctStats.map(s => (
+            <div key={s.label} className="stat-card">
+              <span className="stat-card-label">{s.label}</span>
+              <span className="stat-card-value">
+                {s.current !== null ? `${s.current.toFixed(1)}%` : '--'}
+              </span>
+              <StatDelta current={s.current} prev={s.prev} />
+            </div>
+          ))}
+          <div className="stat-card">
+            <span className="stat-card-label">Priority Metrics</span>
+            <div className="priority-metric-rows">
+              {priorityMetrics.map(m => {
+                const delta = m.current !== null && m.prev !== null ? Math.round(m.current - m.prev) : null;
+                return (
+                  <div key={m.label} className="priority-metric-row">
+                    <span className="priority-metric-name">{m.label}</span>
+                    <span className="priority-metric-value">{m.current !== null ? Math.round(m.current) : '--'}</span>
+                    <span className={`priority-metric-delta ${!delta ? 'neutral' : delta > 0 ? 'up' : 'down'}`}>
+                      {!delta ? '0' : `${delta > 0 ? '↑' : '↓'}${Math.abs(delta)}`}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
         <Grid>
           <div className="card-white">
             <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
