@@ -138,7 +138,7 @@ const TableView: React.FC<TableViewProps> = ({ data, onDelete, onEdit, headers, 
                     Edit
                   </button>
                   <button
-                    onClick={() => onDelete(row.id)}
+                    onClick={() => window.confirm('Delete this record?') && onDelete(row.id)}
                     className="delete-button"
                   >
                     Delete
