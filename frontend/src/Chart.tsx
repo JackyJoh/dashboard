@@ -30,6 +30,8 @@ const Chart: React.FC<ChartProps> = ({ data, graphType, xColumn, yColumn, groupC
 
   useEffect(() => {
     if (!canvasRef.current || !data || !Array.isArray(data) || data.length === 0) {
+      chartInstanceRef.current?.destroy();
+      chartInstanceRef.current = null;
       return;
     }
 

@@ -5,6 +5,8 @@ import { fetchWithAuth } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { CSVLink } from 'react-csv';
 import usePersistedState from '../usePersistedState';
+import { useDateFilter } from '../useDateFilter';
+import DateRangeToggle from '../components/DateRangeToggle';
 
 const formatLastUpdated = (d: Date) =>
   d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
@@ -31,6 +33,7 @@ const PriorityGaps: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [graphType, setGraphType] = usePersistedState<typeof graphsTypeOptions[number]>('nch-graph-type-priority', 'line');
+  const { filteredData, range, setRange } = useDateFilter(chartData);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -140,7 +143,7 @@ const PriorityGaps: React.FC = () => {
   // Memoize long-format conversions so they don't get re-created on every render
   // (typing into other inputs like the date field will cause a render but should
   // not force the charts to rebuild unless the underlying chart data changed).
-  const memoChartLong = useMemo(() => toLongFormat(chartData), [chartData]);
+  const memoChartLong = useMemo(() => toLongFormat(filteredData), [filteredData]);
   const memoRecentLong = useMemo(() => toLongFormat(recentData), [recentData]);
 
   useEffect(() => {
@@ -232,7 +235,8 @@ const PriorityGaps: React.FC = () => {
           </div>
         </div>
         <div className="gaps-chart-full-width-container">
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <DateRangeToggle range={range} onChange={setRange} />
             <button
               className="small-btn"
               aria-label="Fullscreen"
@@ -241,7 +245,7 @@ const PriorityGaps: React.FC = () => {
               <img src="/fullscreen.png" alt="Fullscreen" style={{ transform: 'scale(1.7)' }} />
             </button>
             <CSVLink
-              data={Array.isArray(chartData) && chartData.length > 0 ? chartData : []}
+              data={filteredData.length > 0 ? filteredData : []}
               filename={"priority_metrics_data.csv"}
               className="small-btn"
               aria-label="Download CSV"

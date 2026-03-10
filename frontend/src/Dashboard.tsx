@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 const formatLastUpdated = (d: Date) =>
   d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
@@ -8,6 +8,8 @@ import Grid from './components/Grid';
 import { fetchWithAuth } from './api';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { filterByRange, type DateRange } from './useDateFilter';
+import DateRangeToggle from './components/DateRangeToggle';
 
 function getMonthAvg(
   data: any[],
@@ -117,7 +119,13 @@ const Dashboard: React.FC = () => {
     return out;
   };
 
-  const memoMetricGapsLong = useMemo(() => toLongFormat(metricGapsData), [metricGapsData]);
+  const [dashboardRange, setDashboardRange] = useState<DateRange>('All');
+
+  const filteredGaps = useMemo(() => filterByRange(gapsChartData, dashboardRange), [gapsChartData, dashboardRange]);
+  const filteredRisk = useMemo(() => filterByRange(riskChartData, dashboardRange), [riskChartData, dashboardRange]);
+  const filteredOutreach = useMemo(() => filterByRange(outreachChartData, dashboardRange), [outreachChartData, dashboardRange]);
+  const filteredMetricGaps = useMemo(() => filterByRange(metricGapsData, dashboardRange), [metricGapsData, dashboardRange]);
+  const memoMetricGapsLong = useMemo(() => toLongFormat(filteredMetricGaps), [filteredMetricGaps]);
 
   const gapStats = useMemo(() => getMonthAvg(gapsChartData, d => Number(d.percentage)), [gapsChartData]);
   const outreachStats = useMemo(() => getMonthAvg(outreachChartData, d => Number(d.percentage)), [outreachChartData]);
@@ -183,12 +191,15 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.25rem 0.25rem 0', flexShrink: 0 }}>
+          <DateRangeToggle range={dashboardRange} onChange={setDashboardRange} />
+        </div>
         <Grid>
           <div className="card-white">
             <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
               <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)', flexShrink: 0 }}>Insurance Care Gap Closure Over Time</h4>
               <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-                <Chart id="careGapChart" data={gapsChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+                <Chart id="careGapChart" data={filteredGaps} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
               </div>
             </div>
           </div>
@@ -196,7 +207,7 @@ const Dashboard: React.FC = () => {
             <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
               <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)', flexShrink: 0 }}>Patient Outreach Over Time</h4>
               <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-                <Chart id="outreachChart" data={outreachChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
+                <Chart id="outreachChart" data={filteredOutreach} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType='line' />
               </div>
             </div>
           </div>
@@ -204,7 +215,7 @@ const Dashboard: React.FC = () => {
             <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
               <h4 style={{ margin: '0 0 0.75rem 0', fontSize: 'clamp(0.9rem, 2vw, 1.1rem)', flexShrink: 0 }}>Risk Score Over Time</h4>
               <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
-                <Chart id="riskScoreChart" data={riskChartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='line' />
+                <Chart id="riskScoreChart" data={filteredRisk} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={70} graphType='line' />
               </div>
             </div>
           </div>

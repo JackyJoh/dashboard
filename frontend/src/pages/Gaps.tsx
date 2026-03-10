@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { fetchWithAuth } from '../api';
 import { CSVLink } from "react-csv";
 import usePersistedState from '../usePersistedState';
+import { useDateFilter } from '../useDateFilter';
+import DateRangeToggle from '../components/DateRangeToggle';
 
 const formatLastUpdated = (d: Date) =>
   d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
@@ -35,6 +37,7 @@ const Gaps: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [graphType, setGraphType] = usePersistedState<typeof graphsTypeOptions[number]>('nch-graph-type-gaps', 'line');
+  const { filteredData, range, setRange } = useDateFilter(chartData);
   const navigate = useNavigate();
 
   const fetchChartData = async () => {
@@ -161,7 +164,8 @@ const Gaps: React.FC = () => {
           </div>
         </div>
         <div className="gaps-chart-full-width-container">
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <DateRangeToggle range={range} onChange={setRange} />
             <button
               className="small-btn"
               aria-label="Fullscreen"
@@ -170,7 +174,7 @@ const Gaps: React.FC = () => {
               <img src="/fullscreen.png" alt="Fullscreen" style={{ transform: 'scale(1.7)' }} />
             </button>
             <CSVLink
-              data={Array.isArray(chartData) && chartData.length > 0 ? chartData : []}
+              data={filteredData.length > 0 ? filteredData : []}
               filename={"care_gap_closure_data.csv"}
               className="small-btn"
               aria-label="Download CSV"
@@ -187,7 +191,7 @@ const Gaps: React.FC = () => {
           </div>
           {lastUpdated && <p className="chart-last-updated">Updated {formatLastUpdated(lastUpdated)}</p>}
           <div style={{ width: '100%', height: 'clamp(300px, 50vh, 500px)', minHeight: 250 }}>
-            <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
+            <Chart data={filteredData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
           </div>
         </div>
       </div>
@@ -240,7 +244,7 @@ const Gaps: React.FC = () => {
               Insurance Gap Closures over Time
             </h2>
             <div style={{ width: '100%', height: 'calc(100% - 4rem)' }}>
-              <Chart data={chartData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
+              <Chart data={filteredData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
             </div>
           </div>
         </div>
