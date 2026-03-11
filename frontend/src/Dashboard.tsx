@@ -154,9 +154,9 @@ const Dashboard: React.FC = () => {
   }
 
   const pctStats = [
-    { label: 'Care Gap Closure', ...gapStats },
-    { label: 'Patient Outreach', ...outreachStats },
-    { label: 'Risk Score', ...riskStats },
+    { label: 'Care Gap Closure', path: '/gaps', ...gapStats },
+    { label: 'Patient Outreach', path: '/outreach', ...outreachStats },
+    { label: 'Risk Score', path: '/risk', ...riskStats },
   ];
 
   return (
@@ -165,7 +165,7 @@ const Dashboard: React.FC = () => {
         <div className="stats-row">
           <span className="stats-row-header">Current month averages</span>
           {pctStats.map(s => (
-            <div key={s.label} className="stat-card">
+            <div key={s.label} className="stat-card stat-card-link" onClick={() => navigate(s.path)}>
               <span className="stat-card-label">{s.label}</span>
               <span className="stat-card-value">
                 {s.current !== null ? `${s.current.toFixed(1)}%` : '--'}
@@ -173,7 +173,7 @@ const Dashboard: React.FC = () => {
               <StatDelta current={s.current} prev={s.prev} />
             </div>
           ))}
-          <div className="stat-card">
+          <div className="stat-card stat-card-link" onClick={() => navigate('/priority')}>
             <span className="stat-card-label">Priority Metrics</span>
             <div className="priority-metric-rows">
               {priorityMetrics.map(m => {

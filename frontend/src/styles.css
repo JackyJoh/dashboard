@@ -1198,6 +1198,16 @@ html, body {
   gap: 0.1rem;
 }
 
+.stat-card-link {
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.stat-card-link:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
 .stat-card-label {
   font-size: 0.68rem;
   font-weight: 600;
