@@ -1022,6 +1022,24 @@ html, body {
   background-clip: padding-box; /* ensure background doesn't bleed into the sticky header area */
 }
 
+.sortable-th {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable-th:hover {
+  background-color: #e9eaec;
+}
+
+.sort-indicator {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}
+
+.sortable-th:hover .sort-indicator {
+  color: #4b5563;
+}
+
 .data-table tbody tr:hover {
   background-color: #f9fafb;
 }

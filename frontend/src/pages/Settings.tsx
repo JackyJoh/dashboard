@@ -7,12 +7,33 @@ import '../styles.css';
 
 
 const Settings: React.FC = () => {
-  const [tableData, setTableData] = useState<any[]>([]); // Using 'any[]' for flexibility
-  const [headers, setHeaders] = useState<string[]>([]); // Dynamic headers
+  const [tableData, setTableData] = useState<any[]>([]);
+  const [headers, setHeaders] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedTable, setSelectedTable] = useState('closure_percentage'); // New state for the dropdown
+  const [selectedTable, setSelectedTable] = useState('closure_percentage');
+  const [sortColumn, setSortColumn] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const navigate = useNavigate();
+
+  const handleSort = (col: string) => {
+    if (sortColumn === col) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(col);
+      setSortDir('asc');
+    }
+  };
+
+  const sortedData = React.useMemo(() => {
+    if (!sortColumn) return tableData;
+    return [...tableData].sort((a, b) => {
+      const av = a[sortColumn], bv = b[sortColumn];
+      const an = Number(av), bn = Number(bv);
+      const cmp = !isNaN(an) && !isNaN(bn) ? an - bn : String(av ?? '').localeCompare(String(bv ?? ''));
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [tableData, sortColumn, sortDir]);
 
   const fetchTableData = async () => {
     try {
@@ -112,7 +133,7 @@ const Settings: React.FC = () => {
             id="table-selector" 
             className="table-select-styled"
             value={selectedTable}
-            onChange={(e) => { setSelectedTable(e.target.value); setError(null); }}
+            onChange={(e) => { setSelectedTable(e.target.value); setError(null); setSortColumn(null); }}
           >
             <option value="closure_percentage">Insurance Closure Data</option>
             <option value="risk_closure">Risk Closure Data</option>
@@ -141,12 +162,17 @@ const Settings: React.FC = () => {
             <thead>
               <tr>
                 {headers.map(header => (
-                  <th key={header}>{header}</th>
+                  <th key={header} className="sortable-th" onClick={() => handleSort(header)}>
+                    {header}
+                    <span className="sort-indicator">
+                      {sortColumn === header ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ' ↕'}
+                    </span>
+                  </th>
                 ))}
                 <th>Actions</th>
               </tr>
             </thead>
-            <TableView data={tableData} onDelete={handleDelete} onEdit={handleEdit} headers={headers} />
+            <TableView data={sortedData} onDelete={handleDelete} onEdit={handleEdit} headers={headers} />
           </table>
         </div>
       </div>

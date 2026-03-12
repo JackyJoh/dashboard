@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
+import usePersistedState from './usePersistedState';
 
 export type DateRange = '3M' | '6M' | '1Y' | 'All';
 
@@ -11,7 +12,7 @@ export function filterByRange<T extends { date: string }>(data: T[], range: Date
 }
 
 export function useDateFilter<T extends { date: string }>(data: T[]) {
-  const [range, setRange] = useState<DateRange>('All');
+  const [range, setRange] = usePersistedState<DateRange>('nch-date-range', 'All');
   const filteredData = useMemo(() => filterByRange(data, range), [data, range]);
   return { filteredData, range, setRange };
 }

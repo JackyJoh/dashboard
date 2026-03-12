@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { filterByRange, type DateRange } from './useDateFilter';
 import DateRangeToggle from './components/DateRangeToggle';
+import usePersistedState from './usePersistedState';
 
 function getMonthAvg(
   data: any[],
@@ -119,7 +120,7 @@ const Dashboard: React.FC = () => {
     return out;
   };
 
-  const [dashboardRange, setDashboardRange] = useState<DateRange>('All');
+  const [dashboardRange, setDashboardRange] = usePersistedState<DateRange>('nch-date-range', 'All');
 
   const filteredGaps = useMemo(() => filterByRange(gapsChartData, dashboardRange), [gapsChartData, dashboardRange]);
   const filteredRisk = useMemo(() => filterByRange(riskChartData, dashboardRange), [riskChartData, dashboardRange]);
