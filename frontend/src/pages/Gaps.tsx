@@ -103,6 +103,16 @@ const Gaps: React.FC = () => {
       return;
     }
 
+    const submitDate = new Date(date);
+    const duplicate = chartData.some(entry => {
+      const d = new Date(entry.date);
+      return d.getFullYear() === submitDate.getFullYear() && d.getMonth() === submitDate.getMonth() && entry.insurance === insurance;
+    });
+    if (duplicate) {
+      const month = submitDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      if (!window.confirm(`An entry for ${insurance} in ${month} already exists. Add anyway?`)) return;
+    }
+
     try {
       const response = await fetchWithAuth('/api/gaps', {
         method: 'POST',

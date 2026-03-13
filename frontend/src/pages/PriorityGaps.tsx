@@ -82,6 +82,16 @@ const PriorityGaps: React.FC = () => {
     formData.append('excelFile', selectedFile);
     formData.append('date', selectedDate);
 
+    const submitDate = new Date(selectedDate);
+    const duplicate = chartData.some(entry => {
+      const d = new Date(entry.date);
+      return d.getFullYear() === submitDate.getFullYear() && d.getMonth() === submitDate.getMonth();
+    });
+    if (duplicate) {
+      const month = submitDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      if (!window.confirm(`An entry for ${month} already exists. Add anyway?`)) return;
+    }
+
     (async () => {
       try {
         setProcessing(true);
