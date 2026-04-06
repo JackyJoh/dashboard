@@ -35,6 +35,11 @@ const PriorityGaps: React.FC = () => {
   const [graphType, setGraphType] = usePersistedState<typeof graphsTypeOptions[number]>('nch-graph-type-priority', 'line');
   const { filteredData, range, setRange } = useDateFilter(chartData);
 
+  const missingThisMonth = chartData.length > 0 && !chartData.some(entry => {
+    const d = new Date(entry.date), now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -181,6 +186,11 @@ const PriorityGaps: React.FC = () => {
   return (
     <Layout showHeader={false}>
       <div className="gaps-page-container">
+        {missingThisMonth && (
+          <div className="missing-data-banner">
+            ⚠ No data entered for {new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })} yet.
+          </div>
+        )}
         {error && (
           <div style={{ background: '#fee2e2', color: '#991b1b', padding: '0.75rem', borderRadius: 6, marginBottom: '1rem' }}>
             {error}

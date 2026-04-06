@@ -40,6 +40,11 @@ const Outreach: React.FC = () => {
   const { filteredData, range, setRange } = useDateFilter(chartData);
   const navigate = useNavigate();
 
+  const missingThisMonth = chartData.length > 0 && !chartData.some(entry => {
+    const d = new Date(entry.date), now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
+
   const fetchChartData = async () => {
     try {
       // Fetch both datasets in parallel
@@ -91,6 +96,10 @@ const Outreach: React.FC = () => {
     
     if (isNaN(numerator) || isNaN(denominator) || numerator < 0 || denominator <= 0) {
       alert('Please enter valid numbers for numerator and denominator (denominator must be greater than 0)');
+      return;
+    }
+    if (numerator > denominator) {
+      alert(`Numerator (${numerator}) cannot be greater than denominator (${denominator}).`);
       return;
     }
 
@@ -161,6 +170,11 @@ const Outreach: React.FC = () => {
   return (
     <Layout showHeader={false}>
       <div className="gaps-page-container">
+        {missingThisMonth && (
+          <div className="missing-data-banner">
+            ⚠ No data entered for {new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })} yet.
+          </div>
+        )}
         <div className="gaps-top-row">
           <div className="gaps-top-row-item">
             <DataEntryForm

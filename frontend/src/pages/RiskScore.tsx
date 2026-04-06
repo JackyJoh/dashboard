@@ -39,6 +39,11 @@ const RiskScore: React.FC = () => {
   const [graphType, setGraphType] = usePersistedState<typeof graphsTypeOptions[number]>('nch-graph-type-risk', 'line');
   const { filteredData, range, setRange } = useDateFilter(chartData);
 
+  const missingThisMonth = chartData.length > 0 && !chartData.some(entry => {
+    const d = new Date(entry.date), now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+  });
+
 
   //get risk score data
   const fetchChartData = async () => {
@@ -141,6 +146,11 @@ const RiskScore: React.FC = () => {
   return (
     <Layout showHeader={false}>
       <div className="gaps-page-container">
+        {missingThisMonth && (
+          <div className="missing-data-banner">
+            ⚠ No data entered for {new Date().toLocaleString('en-US', { month: 'long', year: 'numeric' })} yet.
+          </div>
+        )}
         <div className="gaps-top-row">
           <div className="gaps-top-row-item">
             <DataEntryForm
