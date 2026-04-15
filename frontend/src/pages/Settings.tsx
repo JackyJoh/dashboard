@@ -14,6 +14,7 @@ const Settings: React.FC = () => {
   const [selectedTable, setSelectedTable] = useState('closure_percentage');
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   const handleSort = (col: string) => {
@@ -34,6 +35,14 @@ const Settings: React.FC = () => {
       return sortDir === 'asc' ? cmp : -cmp;
     });
   }, [tableData, sortColumn, sortDir]);
+
+  const filteredData = React.useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return sortedData;
+    return sortedData.filter(row =>
+      Object.values(row).some(val => String(val ?? '').toLowerCase().includes(q))
+    );
+  }, [sortedData, searchQuery]);
 
   const fetchTableData = async () => {
     try {
@@ -133,7 +142,7 @@ const Settings: React.FC = () => {
             id="table-selector" 
             className="table-select-styled"
             value={selectedTable}
-            onChange={(e) => { setSelectedTable(e.target.value); setError(null); setSortColumn(null); }}
+            onChange={(e) => { setSelectedTable(e.target.value); setError(null); setSortColumn(null); setSearchQuery(''); }}
           >
             <option value="closure_percentage">Insurance Closure Data</option>
             <option value="risk_closure">Risk Closure Data</option>
@@ -154,6 +163,14 @@ const Settings: React.FC = () => {
           Below is the data for the selected table. Use the Edit button to modify a row inline, or Delete to remove it.
         </p>
 
+        <input
+          type="text"
+          className="table-search-input"
+          placeholder="Search all columns..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+        />
+
         {/* Visual spacer outside the scrollable area so the header can stick at top:0 */}
         <div className="table-spacer" aria-hidden="true" />
         {/* Combined Table (thead + scrollable tbody) */}
@@ -172,7 +189,7 @@ const Settings: React.FC = () => {
                 <th>Actions</th>
               </tr>
             </thead>
-            <TableView data={sortedData} onDelete={handleDelete} onEdit={handleEdit} headers={headers} />
+            <TableView data={filteredData} onDelete={handleDelete} onEdit={handleEdit} headers={headers} />
           </table>
         </div>
       </div>

@@ -129,6 +129,14 @@ const Layout: React.FC<LayoutProps> = ({ children, showHeader = true }) => {
 
       <div className="content-layout">
         <Sidebar />
+        <button
+          className="sidebar-toggle-tab"
+          onClick={toggleSidebar}
+          aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          title={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          {isSidebarOpen ? '‹' : '›'}
+        </button>
         <div id="main-content-area" className="main-content-area">
           {children}
         </div>
