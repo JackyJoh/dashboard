@@ -9,6 +9,7 @@ import { CSVLink } from 'react-csv';
 import usePersistedState from '../usePersistedState';
 import { useDateFilter } from '../useDateFilter';
 import DateRangeToggle from '../components/DateRangeToggle';
+import { useToast } from '../components/ToastContext';
 
 const formatLastUpdated = (d: Date) =>
   d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
@@ -36,6 +37,7 @@ const RiskScore: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [graphType, setGraphType] = usePersistedState<typeof graphsTypeOptions[number]>('nch-graph-type-risk', 'line');
   const { filteredData, range, setRange } = useDateFilter(chartData);
 
@@ -81,11 +83,11 @@ const RiskScore: React.FC = () => {
     const { date, insurance } = formData;
 
     if (!date) {
-      alert('Please enter a valid date.');
+      showToast('Please enter a valid date.');
       return;
     }
     if (!insurance) {
-      alert('Please select an insurance company.');
+      showToast('Please select an insurance company.');
       return;
     }
 
@@ -115,9 +117,8 @@ const RiskScore: React.FC = () => {
       const newEntry = await response.json();
       console.log('New entry added successfully:', newEntry);
 
-      // Reset the form by updating the resetKey
+      showToast('Entry added successfully.', 'success');
       setResetKey(prevKey => prevKey + 1);
-
       await fetchChartData();
       
     } catch (error) {

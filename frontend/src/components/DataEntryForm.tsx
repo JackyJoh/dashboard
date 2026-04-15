@@ -18,16 +18,29 @@ interface DataEntryFormProps {
   resetKey: number;
 }
 
+const getDefaultDate = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}-01`;
+};
+
+const buildInitialData = (fields: FormField[]) =>
+  fields.reduce((acc, field) => ({
+    ...acc,
+    [field.name]: field.type === 'date' ? getDefaultDate() : '',
+  }), {} as Record<string, string>);
+
 const DataEntryForm: React.FC<DataEntryFormProps> = ({ title, fields, onSubmit, resetKey }) => {
   const [formData, setFormData] = useState<Record<string, string>>(
-    fields.reduce((acc, field) => ({ ...acc, [field.name]: '' }), {})
+    () => buildInitialData(fields)
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // This useEffect hook watches the resetKey prop
   useEffect(() => {
     // When the key changes, reset the form data
-    setFormData(fields.reduce((acc, field) => ({ ...acc, [field.name]: '' }), {}));
+    setFormData(buildInitialData(fields));
   }, [resetKey, fields]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

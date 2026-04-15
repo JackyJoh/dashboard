@@ -9,6 +9,7 @@ import { CSVLink } from "react-csv";
 import usePersistedState from '../usePersistedState';
 import { useDateFilter } from '../useDateFilter';
 import DateRangeToggle from '../components/DateRangeToggle';
+import { useToast } from '../components/ToastContext';
 
 const formatLastUpdated = (d: Date) =>
   d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
@@ -39,6 +40,7 @@ const Gaps: React.FC = () => {
   const [graphType, setGraphType] = usePersistedState<typeof graphsTypeOptions[number]>('nch-graph-type-gaps', 'line');
   const { filteredData, range, setRange } = useDateFilter(chartData);
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const missingThisMonth = chartData.length > 0 && !chartData.some(entry => {
     const d = new Date(entry.date), now = new Date();
@@ -81,34 +83,34 @@ const Gaps: React.FC = () => {
     const { percentage, date, insurance } = formData;
 
      if (!percentage) {
-      alert('Please enter a valid percentage.');
+      showToast('Please enter a valid percentage.');
       return;
     }
 
     // Validate percentage format (numerator/denominator)
     const parts = percentage.split('/');
     if (parts.length !== 2) {
-      alert('Percentage must be in format "numerator/denominator" (e.g., 85/120)');
+      showToast('Percentage must be in format "numerator/denominator" (e.g., 85/120)');
       return;
     }
-    
+
     const numerator = parseInt(parts[0].trim(), 10);
     const denominator = parseInt(parts[1].trim(), 10);
-    
+
     if (isNaN(numerator) || isNaN(denominator) || numerator < 0 || denominator <= 0) {
-      alert('Please enter valid numbers for numerator and denominator (denominator must be greater than 0)');
+      showToast('Please enter valid numbers for numerator and denominator (denominator must be greater than 0)');
       return;
     }
     if (numerator > denominator) {
-      alert(`Numerator (${numerator}) cannot be greater than denominator (${denominator}).`);
+      showToast(`Numerator (${numerator}) cannot be greater than denominator (${denominator}).`);
       return;
     }
     if (!date) {
-      alert('Please enter a valid date.');
+      showToast('Please enter a valid date.');
       return;
     }
     if (!insurance) {
-      alert('Please select an insurance company.');
+      showToast('Please select an insurance company.');
       return;
     }
 
@@ -134,6 +136,7 @@ const Gaps: React.FC = () => {
       const newEntry = await response.json();
       console.log('New entry added successfully:', newEntry);
 
+      showToast('Entry added successfully.', 'success');
       setResetKey(prevKey => prevKey + 1);
       await fetchChartData();
       

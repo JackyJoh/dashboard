@@ -1,5 +1,6 @@
 import React, { useState, type FormEvent } from 'react';
 import './styles.css';
+import { useToast } from './components/ToastContext';
 
 interface LoginProps {
   onLogin: () => void;
@@ -8,6 +9,7 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const { showToast } = useToast();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -27,7 +29,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       localStorage.setItem('auth_token', token);
       onLogin();
     } catch (e) {
-      alert('Login failed. Please check your credentials.');
+      showToast('Login failed. Please check your credentials.');
     }
   };
 

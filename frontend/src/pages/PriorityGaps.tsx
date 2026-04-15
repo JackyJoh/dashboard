@@ -7,6 +7,7 @@ import { CSVLink } from 'react-csv';
 import usePersistedState from '../usePersistedState';
 import { useDateFilter } from '../useDateFilter';
 import DateRangeToggle from '../components/DateRangeToggle';
+import { useToast } from '../components/ToastContext';
 
 const formatLastUpdated = (d: Date) =>
   d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
@@ -23,8 +24,15 @@ const graphsTypeOptions = ['line', 'bar', 'pie'] as const;
 
 const PriorityGaps: React.FC = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const getDefaultDate = () => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}-01`;
+  };
+  const [selectedDate, setSelectedDate] = useState<string>(getDefaultDate);
   const [chartData, setChartData] = useState<ChartDataRecord[]>([]);
   const [recentData, setRecentData] = useState<ChartDataRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -75,11 +83,11 @@ const PriorityGaps: React.FC = () => {
 
   const handleSubmit = () => {
     if (!selectedFile) {
-      alert('Please select a file to upload.');
+      showToast('Please select a file to upload.');
       return;
     }
     if (!selectedDate) {
-      alert('Please select a date.');
+      showToast('Please select a date.');
       return;
     }
     // Placeholder for future implementation
@@ -125,9 +133,10 @@ const PriorityGaps: React.FC = () => {
         // 3) refresh charts
         await fetchChartData();
 
+        showToast('File processed and saved successfully.', 'success');
         // reset
         setSelectedFile(null);
-        setSelectedDate('');
+        setSelectedDate(getDefaultDate());
         // alert('File processed and saved successfully');
 
       } catch (e: any) {
