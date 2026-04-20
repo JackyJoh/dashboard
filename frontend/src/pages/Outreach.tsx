@@ -42,6 +42,19 @@ const Outreach: React.FC = () => {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
+  const avgByInsurance = React.useMemo(() => {
+    if (!filteredData.length) return [];
+    const groups: Record<string, number[]> = {};
+    filteredData.forEach(d => {
+      if (!groups[d.insurance]) groups[d.insurance] = [];
+      groups[d.insurance].push(Number(d.percentage));
+    });
+    return Object.entries(groups).map(([ins, vals]) => ({
+      insurance: ins,
+      avg: vals.reduce((s, v) => s + v, 0) / vals.length,
+    }));
+  }, [filteredData]);
+
   const missingThisMonth = chartData.length > 0 && !chartData.some(entry => {
     const d = new Date(entry.date), now = new Date();
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
@@ -223,6 +236,16 @@ const Outreach: React.FC = () => {
             </button>
           </div>
           {lastUpdated && <p className="chart-last-updated">Updated {formatLastUpdated(lastUpdated)}</p>}
+          {avgByInsurance.length > 0 && (
+            <div className="chart-avg-strip">
+              <span className="chart-avg-label">Avg:</span>
+              {avgByInsurance.map(({ insurance, avg }) => (
+                <span key={insurance} className="chart-avg-chip">
+                  {insurance} <strong>{avg.toFixed(1)}%</strong>
+                </span>
+              ))}
+            </div>
+          )}
           <div style={{ width: '100%', height: 'clamp(300px, 50vh, 500px)', minHeight: 250 }}>
             <Chart data={filteredData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
           </div>

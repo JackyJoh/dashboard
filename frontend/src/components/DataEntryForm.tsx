@@ -59,10 +59,17 @@ const DataEntryForm: React.FC<DataEntryFormProps> = ({ title, fields, onSubmit, 
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter' && (e.target as HTMLElement).tagName.toLowerCase() === 'select') {
+      e.preventDefault();
+      handleSubmit(e as unknown as FormEvent);
+    }
+  };
+
   return (
   <div className="data-entry-form">
     <h4 className="">{title}</h4>
-    <form onSubmit={handleSubmit} className="data-entry-form-fields">
+    <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="data-entry-form-fields">
       {fields.map(field => (
         <div key={field.name}>
           <label htmlFor={field.name} className="">

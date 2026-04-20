@@ -170,6 +170,18 @@ const PriorityGaps: React.FC = () => {
   const memoChartLong = useMemo(() => toLongFormat(filteredData), [filteredData]);
   const memoRecentLong = useMemo(() => toLongFormat(recentData), [recentData]);
 
+  const metricAvgs = useMemo(() => {
+    if (!filteredData.length) return [];
+    const avg = (key: keyof ChartDataRecord) =>
+      filteredData.reduce((s, d) => s + (Number(d[key]) || 0), 0) / filteredData.length;
+    return [
+      { label: 'Diabetes', avg: avg('diabetes') },
+      { label: 'Blood Pressure', avg: avg('blood_pressure') },
+      { label: 'Breast Cancer', avg: avg('breast_cancer') },
+      { label: 'Colorectal', avg: avg('colo_cancer') },
+    ];
+  }, [filteredData]);
+
   useEffect(() => {
     fetchChartData();
   }, []);
@@ -210,11 +222,11 @@ const PriorityGaps: React.FC = () => {
             <div className="data-entry-form">
               <h4>Upload Care Gap Data</h4>
               {/* --- Option 2: Local File Upload --- */}
-              <div style={{ paddingTop: '4rem' }}>
+              <form style={{ paddingTop: '4rem' }} onSubmit={e => { e.preventDefault(); handleSubmit(); }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', color: '#4a5568' }}>
                   Upload a file from your computer
                 </label>
-                
+
                 <div style={{ marginBottom: '1rem' }}>
 
                   <input
@@ -244,10 +256,10 @@ const PriorityGaps: React.FC = () => {
                   />
                 </div>
 
-                <button onClick={handleSubmit} className="form-button" disabled={processing}>
+                <button type="submit" className="form-button" disabled={processing}>
                   {processing ? 'Processing...' : 'Submit'}
                 </button>
-              </div>
+              </form>
 
             </div>
           </div>
@@ -290,6 +302,16 @@ const PriorityGaps: React.FC = () => {
             </button>
           </div>
           {lastUpdated && <p className="chart-last-updated">Updated {formatLastUpdated(lastUpdated)}</p>}
+          {metricAvgs.length > 0 && (
+            <div className="chart-avg-strip">
+              <span className="chart-avg-label">Avg:</span>
+              {metricAvgs.map(({ label, avg }) => (
+                <span key={label} className="chart-avg-chip">
+                  {label} <strong>{Math.round(avg)}</strong>
+                </span>
+              ))}
+            </div>
+          )}
           <div style={{ width: '100%', height: 'clamp(300px, 50vh, 500px)', minHeight: 250 }}>
             {processing ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '2rem', color: '#6366f1', fontWeight: '500' }}>Processing file...</div>
