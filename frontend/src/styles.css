@@ -1107,6 +1107,17 @@ html, body {
   color: #374151;
 }
 
+.chart-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #9ca3af;
+  font-size: 1rem;
+  text-align: center;
+  padding: 2rem;
+}
+
 .table-search-input {
   width: 100%;
   max-width: 320px;

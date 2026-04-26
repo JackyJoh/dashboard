@@ -187,6 +187,13 @@ const PriorityGaps: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (!isFullscreen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsFullscreen(false); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isFullscreen]);
+
+  useEffect(() => {
     if (!error) return;
     const timer = setTimeout(() => setError(null), 5000);
     return () => clearTimeout(timer);
@@ -315,6 +322,12 @@ const PriorityGaps: React.FC = () => {
           <div style={{ width: '100%', height: 'clamp(300px, 50vh, 500px)', minHeight: 250 }}>
             {processing ? (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center', fontSize: '2rem', color: '#6366f1', fontWeight: '500' }}>Processing file...</div>
+            ) : filteredData.length === 0 ? (
+              <div className="chart-empty-state">
+                {chartData.length === 0
+                  ? 'No data yet — upload a file using the form above.'
+                  : 'No data in this date range — try a wider range.'}
+              </div>
             ) : (
               <Chart data={memoChartLong} xColumn="date" yColumn="value" groupColumn="metric" graphType={graphType} />
             )}

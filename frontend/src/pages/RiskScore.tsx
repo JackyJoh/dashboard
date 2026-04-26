@@ -143,6 +143,13 @@ const RiskScore: React.FC = () => {
     fetchChartData();
   }, []);
 
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsFullscreen(false); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isFullscreen]);
+
   if (loading) {
     return (
       <Layout showHeader={false}>
@@ -219,7 +226,15 @@ const RiskScore: React.FC = () => {
             </div>
           )}
           <div style={{ width: '100%', height: 'clamp(300px, 50vh, 500px)', minHeight: 250 }}>
-            <Chart data={filteredData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
+            {filteredData.length === 0 ? (
+              <div className="chart-empty-state">
+                {chartData.length === 0
+                  ? 'No data yet — add an entry using the form above.'
+                  : 'No data in this date range — try a wider range.'}
+              </div>
+            ) : (
+              <Chart data={filteredData} xColumn="date" yColumn="percentage" groupColumn="insurance" maxY={100} graphType={graphType}/>
+            )}
           </div>
         </div>
       </div>
