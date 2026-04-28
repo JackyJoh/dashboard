@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 const formatLastUpdated = (d: Date) =>
   d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
@@ -7,7 +7,7 @@ import Layout from './components/Layout';
 import Grid from './components/Grid';
 import { fetchWithAuth } from './api';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { filterByRange, type DateRange } from './useDateFilter';
 import DateRangeToggle from './components/DateRangeToggle';
 import usePersistedState from './usePersistedState';
@@ -50,6 +50,15 @@ function StatDelta({ current, prev }: { current: number | null; prev: number | n
   );
 }
 
+function isMissingThisMonth(data: any[]): boolean {
+  if (!data.length) return false;
+  const now = new Date();
+  return !data.some(d => {
+    const dt = new Date(d.date);
+    return dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear();
+  });
+}
+
 // Define a type for the data you expect from the API.
 // interface ChartData {
 //   date: string;
@@ -68,6 +77,14 @@ interface metricData {
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await queryClient.invalidateQueries({ queryKey: ['chart-data'] });
+    setIsRefreshing(false);
+  };
 
   // Use React Query to fetch and cache all dashboard data
   const { data: gapsChartData = [], isLoading: gapsLoading, dataUpdatedAt: gapsUpdatedAt } = useQuery({
@@ -154,10 +171,12 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  const priorityMissing = isMissingThisMonth(metricGapsData);
+
   const pctStats = [
-    { label: 'Care Gap Closure', path: '/gaps', ...gapStats },
-    { label: 'Patient Outreach', path: '/outreach', ...outreachStats },
-    { label: 'Risk Score', path: '/risk', ...riskStats },
+    { label: 'Care Gap Closure', path: '/gaps', ...gapStats, missing: isMissingThisMonth(gapsChartData) },
+    { label: 'Patient Outreach', path: '/outreach', ...outreachStats, missing: isMissingThisMonth(outreachChartData) },
+    { label: 'Risk Score', path: '/risk', ...riskStats, missing: isMissingThisMonth(riskChartData) },
   ];
 
   return (
@@ -167,7 +186,10 @@ const Dashboard: React.FC = () => {
           <span className="stats-row-header">Current month averages</span>
           {pctStats.map(s => (
             <div key={s.label} className="stat-card stat-card-link" onClick={() => navigate(s.path)}>
-              <span className="stat-card-label">{s.label}</span>
+              <span className="stat-card-label">
+                {s.label}
+                {s.missing && <span className="stat-card-missing-badge" title="No data entered for this month">⚠</span>}
+              </span>
               <span className="stat-card-value">
                 {s.current !== null ? `${s.current.toFixed(1)}%` : '--'}
               </span>
@@ -175,7 +197,10 @@ const Dashboard: React.FC = () => {
             </div>
           ))}
           <div className="stat-card stat-card-link" onClick={() => navigate('/priority')}>
-            <span className="stat-card-label">Priority Metrics</span>
+            <span className="stat-card-label">
+              Priority Metrics
+              {priorityMissing && <span className="stat-card-missing-badge" title="No data entered for this month">⚠</span>}
+            </span>
             <div className="priority-metric-rows">
               {priorityMetrics.map(m => {
                 const delta = m.current !== null && m.prev !== null ? Math.round(m.current - m.prev) : null;
@@ -192,7 +217,17 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.25rem 0.25rem 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0.25rem 0.25rem 0', flexShrink: 0, gap: '8px', alignItems: 'center' }}>
+          <button
+            className="small-btn"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            aria-label="Refresh data"
+            title="Refresh data"
+            style={{ fontSize: '1rem', lineHeight: 1 }}
+          >
+            <span style={{ display: 'inline-block', animation: isRefreshing ? 'spin 0.7s linear infinite' : 'none' }}>↻</span>
+          </button>
           <DateRangeToggle range={dashboardRange} onChange={setDashboardRange} />
         </div>
         <Grid>

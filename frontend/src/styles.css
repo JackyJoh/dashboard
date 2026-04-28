@@ -1367,6 +1367,16 @@ html, body {
   color: #9ca3af;
 }
 
+.stat-card-missing-badge {
+  margin-left: 5px;
+  color: #d97706;
+  font-size: 0.75rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .priority-metric-rows {
   display: flex;
   flex-direction: column;
